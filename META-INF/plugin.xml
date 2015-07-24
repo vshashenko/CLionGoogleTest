@@ -1,0 +1,47 @@
+<idea-plugin version="2">
+  <id>com.shashenko.gtestrunner</id>
+  <name>Google Test Runner</name>
+  <version>1.0</version>
+  <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
+
+  <description><![CDATA[
+      Run gtest tests from CLion.<br>
+      <em>most HTML tags may be used</em>
+    ]]></description>
+
+  <change-notes><![CDATA[
+      Add change notes here.<br>
+      <em>most HTML tags may be used</em>
+    ]]>
+  </change-notes>
+
+  <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+  <idea-version since-build="131"/>
+
+  <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products  -->
+
+  <depends>com.intellij.modules.clion</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+      <toolWindow id="GTest Runner" anchor="bottom" icon="/gtestrunner/OpenTerminal_13x13.png"
+                  factoryClass="gtestrunner.RunnerToolWindowFactory" secondary="false"/>
+  </extensions>
+
+  <application-components>
+    <!-- Add your application components here -->
+  </application-components>
+
+  <project-components>
+      <!--<component>-->
+          <!--<interface-class>gtestrunner.RunnerView</interface-class>-->
+          <!--<implementation-class>gtestrunner.RunnerView</implementation-class>-->
+      <!--</component>-->
+  </project-components>
+
+  <actions>
+    <!-- Add your actions here -->
+  </actions>
+
+</idea-plugin>
