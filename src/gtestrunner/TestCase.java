@@ -9,8 +9,6 @@ import java.util.List;
 public class TestCase extends TestItem
 {
     private TestSuite _suite;
-    private TestCaseStatus _status;
-    private int _executionTime;
     private List<String> _failures = new ArrayList<>();
 
     public TestCase(TestSuite suite, String caseName)
@@ -18,38 +16,23 @@ public class TestCase extends TestItem
         super(caseName);
 
         _suite = suite;
-        _status = TestCaseStatus.NotRun;
-        _executionTime = 0;
     }
 
-    public TestSuite getSuite()
-    {
-        return _suite;
-    }
-
-    public TestCaseStatus getStatus()
-    {
-        return _status;
-    }
-
+    @Override
     public void setStatus(TestCaseStatus value)
     {
-        _status = value;
+        super.setStatus(value);
 
-        if (_status == TestCaseStatus.NotRun)
+        if (value == TestCaseStatus.NotRun)
         {
             _failures.clear();
         }
     }
 
-    public int getExecutionTime()
-    {
-        return _executionTime;
-    }
 
-    public void setExecutionTime(int value)
+    public TestSuite getSuite()
     {
-        _executionTime = value;
+        return _suite;
     }
 
     public String getFullName()
@@ -65,7 +48,7 @@ public class TestCase extends TestItem
     @Override
     public String toString()
     {
-        return String.format("%s -- %s ms", super.getName(), _executionTime);
+        return String.format("%s -- %s ms", super.getName(), super.getExecutionTime());
         //return getName();
     }
 }

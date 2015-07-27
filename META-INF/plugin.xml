@@ -25,7 +25,7 @@
   <depends>com.intellij.modules.clion</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-      <toolWindow id="GTest Runner" anchor="bottom" icon="/gtestrunner/OpenTerminal_13x13.png"
+      <toolWindow id="Google Test" anchor="bottom" icon="/gtestrunner/images/OpenTerminal_13x13.png"
                   factoryClass="gtestrunner.RunnerToolWindowFactory" secondary="false"/>
   </extensions>
 

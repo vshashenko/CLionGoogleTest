@@ -1,0 +1,26 @@
+- Tree icons for suites
+- Improve icons
+- Run gtest process in a separate thread (ExecutorService)
+- Add progress indication while executing tests (based on prev. execution times?)
+- Two run buttons: Run all, Run dropdown (selected, failed, not run)
+- Execution times in right aligned column of the tree control
+- No horizontal scroll bar
+- Goto failed line of source code from failure report
+- Overview of a test run (execution date-time, running time, number of tests in different states)
+- Handle if the process crashes or is not a gtest exe or not found ("No output from the gtest executable. Probably it crashed or is incorrect.".)
+- Write gtest process exit code to Console tab.
+- Stop running gtest process (maybe it hang)
+- Stand-alone app in release
+- Problem if "Build all" selected (or no active config selected).
+- Dropdown list to select gtest target
+- Autodetect target with gtest
+- Update the path to gtest exe if project settings changed (vfs change listener?)
+- Debug selected tests (runs with clion debugger command)
+- Handle xml parsing errors.
+- Go to the test source code on a tree item double click.
+- Kill running gtest process on app/Clion exit.
+
+Beyond the runner
+-----------------
+
+- Command to generate gtest test suite class.
