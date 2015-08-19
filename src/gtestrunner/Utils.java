@@ -13,6 +13,14 @@ public class Utils
         }
     }
 
+    public static void collapseAll(JTree tree)
+    {
+        for (int i = 0; i < tree.getRowCount(); i++)
+        {
+            tree.collapseRow(i);
+        }
+    }
+
     public static String stringJoin(String delim, List<String> stringList)
     {
         StringBuilder builder = new StringBuilder();

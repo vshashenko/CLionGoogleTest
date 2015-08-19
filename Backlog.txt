@@ -1,7 +1,8 @@
 - Tree icons for suites
 - Improve icons
+- Write to console output window in real time (while the process is executing).
 - Handle xml parsing errors.
-- Add expand all and collapse all buttons.
+- Proper handling of unexpected output from test discovery command.
 - Add progress indication while executing tests (based on prev. execution times?)
 - Two run buttons: Run all, Run dropdown (selected, failed, not run)
 - Execution times in right-aligned column of the tree control

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="gtestrunner.RunnerToolWindow">
-  <grid id="27dc6" binding="root" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="5" vgap="5">
+  <grid id="27dc6" binding="_rootView" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="5" vgap="5">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="20" y="20" width="606" height="400"/>
@@ -118,6 +118,24 @@
             <properties>
               <borderPainted value="false"/>
               <icon value="gtestrunner/images/Stop.png"/>
+              <opaque value="false"/>
+              <text value=""/>
+            </properties>
+          </component>
+          <component id="c65e3" class="javax.swing.JButton" binding="_expandAllButton">
+            <constraints/>
+            <properties>
+              <borderPainted value="false"/>
+              <icon value="gtestrunner/images/ExpandAll.png"/>
+              <opaque value="false"/>
+              <text value=""/>
+            </properties>
+          </component>
+          <component id="db0a6" class="javax.swing.JButton" binding="_collapseAllButton">
+            <constraints/>
+            <properties>
+              <borderPainted value="false"/>
+              <icon value="gtestrunner/images/CollapseAll.png"/>
               <opaque value="false"/>
               <text value=""/>
             </properties>

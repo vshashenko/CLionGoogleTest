@@ -1,15 +1,6 @@
 package gtestrunner;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
 import javax.swing.*;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
 import java.awt.*;
 import java.io.File;
 import java.io.PrintWriter;
@@ -34,7 +25,7 @@ public class DemoApp
 
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        tabbedPane.addTab("Tests", runnerToolWindow.root);
+        tabbedPane.addTab("Tests", runnerToolWindow.getRootView());
         tabbedPane.addTab("Console", consoleWindow.root);
 
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();

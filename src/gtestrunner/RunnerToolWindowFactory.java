@@ -53,7 +53,7 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
 
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
 
-        Content testsContent = contentFactory.createContent(_runnerToolWindow.root, "Tests", false);
+        Content testsContent = contentFactory.createContent(_runnerToolWindow.getRootView(), "Tests", false);
         toolWindow.getContentManager().addContent(testsContent);
 
         Content consoleContent = contentFactory.createContent(_consoleWindow.root, "Console", false);

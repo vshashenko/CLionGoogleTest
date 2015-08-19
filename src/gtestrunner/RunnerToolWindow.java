@@ -21,23 +21,24 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 
 public class RunnerToolWindow
 {
-    public JPanel root;
+    private JPanel _rootView;
     private JTree _testTree;
-    private JButton _discoverButton;
     private JTextArea _errorArea;
+    private JButton _discoverButton;
     private JButton _runAllButton;
     private JButton _runSelectedButton;
+    private JButton _stopButton;
+    private JButton _expandAllButton;
+    private JButton _collapseAllButton;
     private JSplitPane _splitPane;
     private JTextField _executablePathArea;
     private JTextField _runSummary;
     private JProgressBar _progressBar;
     private JPanel _summaryCards;
-    private JButton _stopButton;
+
     private DefaultTreeModel _testListModel;
 
     private ImageIcon _disabledIcon;
@@ -52,6 +53,7 @@ public class RunnerToolWindow
 
     private Path _resultFile;
     private SwingWorker<ProcessResult, Void> _testExecutionWorker;
+    private SwingWorker<ProcessResult, Void> _testDiscoveryWorker;
     private Process _process;
 
     RunnerToolWindow()
@@ -81,8 +83,14 @@ public class RunnerToolWindow
             }
         });
 
+        //OpenSourceUtil.openSourcesFrom(null);
+        //ApplicationManager.getApplication().getComponent(DataManager.class);
+
         _testTree.setCellRenderer(new DefaultTreeCellRenderer()
         {
+            JPanel _renderer = new JPanel();
+            JLabel _timeLabel = new JLabel("50 ms");
+
             @Override
             public Component getTreeCellRendererComponent(JTree tree,
                                                           Object value,
@@ -93,6 +101,9 @@ public class RunnerToolWindow
                                                           boolean focused)
             {
                 Component c = super.getTreeCellRendererComponent(tree, value, selected, expanded, isLeaf, row, focused);
+
+                //_renderer.add(c);
+                //_renderer.setBackground(c.getBackground());
 
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
                 if (node.getUserObject() instanceof TestCase)
@@ -119,6 +130,7 @@ public class RunnerToolWindow
                     }
                 }
 
+                //return _renderer;
                 return c;
             }
         });
@@ -159,6 +171,24 @@ public class RunnerToolWindow
             }
         });
 
+        _expandAllButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                onExpandAllButtonClicked(e);
+            }
+        });
+
+        _collapseAllButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                onCollapseAllButtonClicked(e);
+            }
+        });
+
         _testTree.addTreeSelectionListener(new TreeSelectionListener()
         {
             @Override
@@ -167,6 +197,11 @@ public class RunnerToolWindow
                 onTreeSelectionChanged(e);
             }
         });
+    }
+
+    public JComponent getRootView()
+    {
+        return _rootView;
     }
 
     public void setConsoleOutputWindow(ConsoleOutputWindow consoleOutputWindow)
@@ -206,62 +241,7 @@ public class RunnerToolWindow
 
     private void onDiscoverButtonClicked(ActionEvent e)
     {
-        DefaultMutableTreeNode root = (DefaultMutableTreeNode)_testListModel.getRoot();
-        root.removeAllChildren();
-        _testListModel.reload();
-
-        try
-        {
-            int testCount = 0;
-            List<String> outputLines = getTestList();
-
-            TestSuite currentSuite = null;
-            DefaultMutableTreeNode suiteNode = null;
-
-            for (String currentLine : outputLines)
-            {
-                currentLine = currentLine.trim();
-
-                if (currentLine.endsWith("."))
-                {
-                    if (currentLine.length() > 1)
-                    {
-                        String suiteName = currentLine.substring(0, currentLine.length() - 1);
-                        currentSuite = new TestSuite(suiteName);
-
-                        suiteNode = new DefaultMutableTreeNode(currentSuite);
-                        root.add(suiteNode);
-                    }
-                }
-                else
-                {
-                    TestCase testCase = new TestCase(currentSuite, currentLine);
-                    testCount++;
-
-                    DefaultMutableTreeNode caseNode = new DefaultMutableTreeNode(testCase);
-                    suiteNode.add(caseNode);
-                }
-            }
-
-            _testSuites = new TestSuites(testCount, "", 0);
-
-            _testListModel.reload();
-            Utils.expandAll(_testTree);
-
-            String s = Utils.stringJoin("\n", outputLines);
-            _consoleOutputWindow.textArea1.setText(s);
-        }
-//        catch (ProcessExecutionException e)
-//        {
-//            _errorArea.setText(e.getProcessOutput());
-//        }
-        catch (Exception ex)
-        {
-            StringWriter sw = new StringWriter();
-            ex.printStackTrace(new PrintWriter(sw));
-
-            _errorArea.setText("Exception:\n" + sw.toString());
-        }
+        discoverTests();
     }
 
     private void onRunSelectedButtonClicked(ActionEvent e)
@@ -294,22 +274,30 @@ public class RunnerToolWindow
             }
         }
 
-        runTests2(testList);
+        runTests(testList, TestRunMode.Selected);
     }
 
     private void onRunAllButtonClicked(ActionEvent e)
     {
-        onDiscoverButtonClicked(null);
-
         List<String> testList = new ArrayList<>();
         testList.add("*");
 
-        runTests2(testList);
+        runTests(testList, TestRunMode.All);
     }
 
     private void onStopButtonClicked(ActionEvent e)
     {
         _process.destroy();
+    }
+
+    private void onExpandAllButtonClicked(ActionEvent e)
+    {
+        Utils.expandAll(_testTree);
+    }
+
+    private void onCollapseAllButtonClicked(ActionEvent e)
+    {
+        Utils.collapseAll(_testTree);
     }
 
     private void onTreeSelectionChanged(TreeSelectionEvent e)
@@ -353,34 +341,78 @@ public class RunnerToolWindow
 
     private void discoverTests()
     {
+        DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)_testListModel.getRoot();
+        rootNode.removeAllChildren();
+        _testListModel.reload();
 
+        _consoleOutputWindow.textArea1.setText("");
+
+        final List<String> args = new ArrayList<>();
+
+        args.add(_executablePathArea.getText());
+        args.add("--gtest_list_tests");
+        args.addAll(_additionalArguments);
+
+        _testDiscoveryWorker = new SwingWorker<ProcessResult, Void>()
+        {
+            @Override
+            protected ProcessResult doInBackground() throws Exception
+            {
+                return executeProcess(args);
+            }
+
+            @Override
+            protected void done()
+            {
+                onTestDiscoveryFinished();
+            }
+        };
+
+        CardLayout cl = (CardLayout)(_summaryCards.getLayout());
+        cl.show(_summaryCards, "ProgressCard");
+
+        _runSelectedButton.setEnabled(false);
+        _runAllButton.setEnabled(false);
+        _discoverButton.setEnabled(false);
+        _stopButton.setEnabled(true);
+        _progressBar.setIndeterminate(true);
+
+        _testDiscoveryWorker.execute();
     }
 
-    private void runTests(List<String> testList)
+    private void onTestDiscoveryFinished()
     {
-        Path resultFile = null;
+        _stopButton.setEnabled(false);
+        _progressBar.setIndeterminate(false);
+        _runSelectedButton.setEnabled(true);
+        _runAllButton.setEnabled(true);
+        _discoverButton.setEnabled(true);
+
+        CardLayout cl = (CardLayout)(_summaryCards.getLayout());
+        cl.show(_summaryCards, "SummaryCard");
+
+        DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)_testListModel.getRoot();
+        ProcessResult processResult = null;
 
         try
         {
-            DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)_testListModel.getRoot();
-            resetAllTestsToNotRun(rootNode);
+            processResult = _testDiscoveryWorker.get();
 
-            //resultFile = Files.createTempFile("gtestrunner", "");
-            resultFile = new File("/home/shashenk/Devel/gtestrunner_results.txt").toPath();
-            //resultFile = new File("d:\\devel\\gtestrunner_results.txt").toPath();
+            String s = Utils.stringJoin("\n", processResult.outputLines);
 
-            List<String> outputLines = runTests(testList, resultFile);
+            _consoleOutputWindow.textArea1.setText(String.format("The process exited with the code: %d", processResult.exitValue));
+            _consoleOutputWindow.textArea1.append("\n\n");
+            _consoleOutputWindow.textArea1.append(s);
 
-            processTestResults(resultFile, rootNode);
-
-            String s = Utils.stringJoin("\n", outputLines);
-            _consoleOutputWindow.textArea1.setText(s);
+            processDiscoveryResults(processResult.outputLines, rootNode);
 
             onTreeSelectionChanged(new TreeSelectionEvent(_testTree, _testTree.getSelectionPath(), true, null, null));
         }
-//        catch (ProcessExecutionException e)
+//        catch (ExecutionException ex)
 //        {
-//            _errorArea.setText(e.getProcessOutput());
+//        }
+//        catch (InterruptedException ex)
+//        {
 //        }
         catch (Exception ex)
         {
@@ -389,22 +421,9 @@ public class RunnerToolWindow
 
             _errorArea.setText("Exception:\n" + sw.toString());
         }
-        finally
-        {
-            if (resultFile != null)
-            {
-//                try
-//                {
-//                    Files.deleteIfExists(resultFile);
-//                }
-//                catch(IOException e)
-//                {
-//                }
-            }
-        }
     }
 
-    private void runTests2(final List<String> testList)
+    private void runTests(List<String> testList, final TestRunMode runMode)
     {
         DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)_testListModel.getRoot();
         resetAllTestsToNotRun(rootNode);
@@ -422,6 +441,9 @@ public class RunnerToolWindow
         args.add("--gtest_output=xml:" + _resultFile.toString()); // whitespaces in filename
         args.addAll(_additionalArguments);
 
+        //TODO refactoring: tie console window text to the process output so the call is not duplicated.
+        _consoleOutputWindow.textArea1.setText("");
+
         _testExecutionWorker = new SwingWorker<ProcessResult, Void>()
         {
             @Override
@@ -433,7 +455,7 @@ public class RunnerToolWindow
             @Override
             protected void done()
             {
-                onWorkerDone();
+                onTestRunFinished(runMode);
             }
         };
 
@@ -449,7 +471,7 @@ public class RunnerToolWindow
         _testExecutionWorker.execute();
     }
 
-    private void onWorkerDone()
+    private void onTestRunFinished(TestRunMode runMode)
     {
         _stopButton.setEnabled(false);
         _progressBar.setIndeterminate(false);
@@ -460,7 +482,6 @@ public class RunnerToolWindow
         CardLayout cl = (CardLayout)(_summaryCards.getLayout());
         cl.show(_summaryCards, "SummaryCard");
 
-
         DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)_testListModel.getRoot();
         ProcessResult processResult = null;
 
@@ -468,24 +489,28 @@ public class RunnerToolWindow
         {
             processResult = _testExecutionWorker.get();
 
-            processTestResults(_resultFile, rootNode);
-
             String s = Utils.stringJoin("\n", processResult.outputLines);
 
             _consoleOutputWindow.textArea1.setText(String.format("The process exited with the code: %d", processResult.exitValue));
             _consoleOutputWindow.textArea1.append("\n\n");
             _consoleOutputWindow.textArea1.append(s);
 
+            processTestResults(_resultFile, rootNode, runMode);
+
             onTreeSelectionChanged(new TreeSelectionEvent(_testTree, _testTree.getSelectionPath(), true, null, null));
         }
-        catch (ExecutionException ex)
-        {
-        }
-        catch (InterruptedException ex)
-        {
-        }
+//        catch (ExecutionException ex)
+//        {
+//        }
+//        catch (InterruptedException ex)
+//        {
+//        }
         catch (Exception ex)
         {
+            StringWriter sw = new StringWriter();
+            ex.printStackTrace(new PrintWriter(sw));
+
+            _errorArea.setText("Exception:\n" + sw.toString());
         }
         finally
         {
@@ -573,11 +598,55 @@ public class RunnerToolWindow
         return processResult;
     }
 
-    private void processTestResults(Path resultFile, DefaultMutableTreeNode root) throws Exception
+    private void processDiscoveryResults(List<String> outputLines, DefaultMutableTreeNode rootNode)
+    {
+        int testCount = 0;
+        TestSuite currentSuite = null;
+        DefaultMutableTreeNode suiteNode = null;
+
+        for (String currentLine : outputLines)
+        {
+            currentLine = currentLine.trim();
+
+            if (currentLine.endsWith("."))
+            {
+                if (currentLine.length() > 1)
+                {
+                    String suiteName = currentLine.substring(0, currentLine.length() - 1);
+                    currentSuite = new TestSuite(suiteName);
+
+                    suiteNode = new DefaultMutableTreeNode(currentSuite);
+                    rootNode.add(suiteNode);
+                }
+            }
+            else
+            {
+                TestCase testCase = new TestCase(currentSuite, currentLine);
+                testCount++;
+
+                DefaultMutableTreeNode caseNode = new DefaultMutableTreeNode(testCase);
+                suiteNode.add(caseNode);
+            }
+        }
+
+        _testSuites = new TestSuites(testCount, "", 0);
+
+        _testListModel.reload();
+        Utils.expandAll(_testTree);
+    }
+
+    private void processTestResults(Path resultFile, DefaultMutableTreeNode rootNode, TestRunMode runMode)
+            throws Exception
     {
         if (!Files.exists(resultFile))
         {
             throw new Exception("Result file does not exist.");
+        }
+
+        if (runMode == TestRunMode.All)
+        {
+            rootNode.removeAllChildren();
+            _testListModel.reload();
         }
 
         _errorArea.setText("");
@@ -588,18 +657,12 @@ public class RunnerToolWindow
 
         Element testSuitesElement = doc.getDocumentElement();
 
-        //String testCount = testSuitesElement.getAttribute("tests");
+        String testCount = testSuitesElement.getAttribute("tests");
         String timestamp = testSuitesElement.getAttribute("timestamp");
         String time = testSuitesElement.getAttribute("time");
         String failures = testSuitesElement.getAttribute("failures");
         String disabled = testSuitesElement.getAttribute("disabled");
         String failed = testSuitesElement.getAttribute("failures");
-
-        _testSuites.setExecutionTime((int) (Double.parseDouble(time) * 1000));
-        _testSuites.setStatus(failures.equals("0") ? TestCaseStatus.Success : TestCaseStatus.Failed);
-        _testSuites.setTimestamp(timestamp);
-        _testSuites.setDisabledTestCount(Integer.parseInt(disabled));
-        _testSuites.setFailedTestCount(Integer.parseInt(failed));
 
         NodeList testSuiteNodeList = testSuitesElement.getElementsByTagName("testsuite");
 
@@ -608,10 +671,20 @@ public class RunnerToolWindow
             Element testSuiteElement = (Element) testSuiteNodeList.item(i1);
 
             String suiteName = testSuiteElement.getAttribute("name");
-            DefaultMutableTreeNode suiteNode = findChildByTestItemName(root, suiteName);
+            DefaultMutableTreeNode suiteNode = findChildByTestItemName(rootNode, suiteName);
+            TestSuite currentSuite = null;
             if (suiteNode == null)
             {
-                continue;
+                if (runMode == TestRunMode.All)
+                {
+                    currentSuite = new TestSuite(suiteName);
+                    suiteNode = new DefaultMutableTreeNode(currentSuite);
+                    rootNode.add(suiteNode);
+                }
+                else
+                {
+                    continue;
+                }
             }
 
             NodeList testCaseNodeList = testSuiteElement.getElementsByTagName("testcase");
@@ -627,7 +700,17 @@ public class RunnerToolWindow
                 DefaultMutableTreeNode caseNode = findChildByTestItemName(suiteNode, caseName);
                 if (caseNode == null)
                 {
-                    continue;
+                    if (runMode == TestRunMode.All)
+                    {
+                        TestCase testCase = new TestCase(currentSuite, caseName);
+
+                        caseNode = new DefaultMutableTreeNode(testCase);
+                        suiteNode.add(caseNode);
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
 
                 TestCase testCase = (TestCase) caseNode.getUserObject();
@@ -654,9 +737,26 @@ public class RunnerToolWindow
                         break;
                 }
 
-                _testListModel.nodeChanged(caseNode);
+                if (runMode == TestRunMode.Selected)
+                {
+                    _testListModel.nodeChanged(caseNode);
+                }
             }
         }
+
+        if (runMode == TestRunMode.All)
+        {
+            _testSuites = new TestSuites(Integer.parseInt(testCount), "", 0);
+
+            _testListModel.reload();
+            Utils.expandAll(_testTree);
+        }
+
+        _testSuites.setExecutionTime((int) (Double.parseDouble(time) * 1000));
+        _testSuites.setStatus(failures.equals("0") ? TestCaseStatus.Success : TestCaseStatus.Failed);
+        _testSuites.setTimestamp(timestamp);
+        _testSuites.setDisabledTestCount(Integer.parseInt(disabled));
+        _testSuites.setFailedTestCount(Integer.parseInt(failed));
 
         String runSummary = String.format("Tests: %d, disabled: %d, failed: %d,  timestamp: %s, time: %d ms",
                 _testSuites.getTestCount(),
