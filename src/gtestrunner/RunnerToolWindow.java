@@ -52,8 +52,8 @@ public class RunnerToolWindow
     private TestSuites _testSuites;
 
     private Path _resultFile;
-    private SwingWorker<ProcessResult, Void> _testExecutionWorker;
-    private SwingWorker<ProcessResult, Void> _testDiscoveryWorker;
+    private SwingWorker<ProcessResult, String> _testExecutionWorker;
+    private SwingWorker<ProcessResult, String> _testDiscoveryWorker;
     private Process _process;
 
     RunnerToolWindow()
@@ -353,12 +353,25 @@ public class RunnerToolWindow
         args.add("--gtest_list_tests");
         args.addAll(_additionalArguments);
 
-        _testDiscoveryWorker = new SwingWorker<ProcessResult, Void>()
+        _testDiscoveryWorker = new SwingWorker<ProcessResult, String>()
         {
             @Override
             protected ProcessResult doInBackground() throws Exception
             {
-                return executeProcess(args);
+                return executeProcess(new IProcessOutputObserver()
+                {
+                    @Override
+                    public void onNewLine(String s)
+                    {
+                        publish(s);
+                    }
+                }, args);
+            }
+
+            @Override
+            protected void process(List<String> chunks)
+            {
+                onTestDiscoveryProgress(chunks);
             }
 
             @Override
@@ -380,6 +393,15 @@ public class RunnerToolWindow
         _testDiscoveryWorker.execute();
     }
 
+    private void onTestDiscoveryProgress(List<String> lines)
+    {
+        for (String line : lines)
+        {
+            _consoleOutputWindow.textArea1.append(line);
+            _consoleOutputWindow.textArea1.append("\n");
+        }
+    }
+
     private void onTestDiscoveryFinished()
     {
         _stopButton.setEnabled(false);
@@ -398,11 +420,10 @@ public class RunnerToolWindow
         {
             processResult = _testDiscoveryWorker.get();
 
-            String s = Utils.stringJoin("\n", processResult.outputLines);
-
-            _consoleOutputWindow.textArea1.setText(String.format("The process exited with the code: %d", processResult.exitValue));
             _consoleOutputWindow.textArea1.append("\n\n");
-            _consoleOutputWindow.textArea1.append(s);
+            String exitMessage = String.format(">> The process has exited with the code: %d", processResult.exitValue);
+            _consoleOutputWindow.textArea1.append(exitMessage);
+            _consoleOutputWindow.textArea1.append("\n");
 
             processDiscoveryResults(processResult.outputLines, rootNode);
 
@@ -444,12 +465,25 @@ public class RunnerToolWindow
         //TODO refactoring: tie console window text to the process output so the call is not duplicated.
         _consoleOutputWindow.textArea1.setText("");
 
-        _testExecutionWorker = new SwingWorker<ProcessResult, Void>()
+        _testExecutionWorker = new SwingWorker<ProcessResult, String>()
         {
             @Override
             protected ProcessResult doInBackground() throws Exception
             {
-                return executeProcess(args);
+                return executeProcess(new IProcessOutputObserver()
+                {
+                    @Override
+                    public void onNewLine(String s)
+                    {
+                        publish(s);
+                    }
+                }, args);
+            }
+
+            @Override
+            protected void process(List<String> chunks)
+            {
+                onTestRunProgress(chunks);
             }
 
             @Override
@@ -471,6 +505,15 @@ public class RunnerToolWindow
         _testExecutionWorker.execute();
     }
 
+    private void onTestRunProgress(List<String> lines)
+    {
+        for (String line : lines)
+        {
+            _consoleOutputWindow.textArea1.append(line);
+            _consoleOutputWindow.textArea1.append("\n");
+        }
+    }
+
     private void onTestRunFinished(TestRunMode runMode)
     {
         _stopButton.setEnabled(false);
@@ -489,11 +532,10 @@ public class RunnerToolWindow
         {
             processResult = _testExecutionWorker.get();
 
-            String s = Utils.stringJoin("\n", processResult.outputLines);
-
-            _consoleOutputWindow.textArea1.setText(String.format("The process exited with the code: %d", processResult.exitValue));
             _consoleOutputWindow.textArea1.append("\n\n");
-            _consoleOutputWindow.textArea1.append(s);
+            String exitMessage = String.format(">> The process has exited with the code: %d", processResult.exitValue);
+            _consoleOutputWindow.textArea1.append(exitMessage);
+            _consoleOutputWindow.textArea1.append("\n");
 
             processTestResults(_resultFile, rootNode, runMode);
 
@@ -535,7 +577,7 @@ public class RunnerToolWindow
         args.add("--gtest_list_tests");
         args.addAll(_additionalArguments);
 
-        ProcessResult processResult = executeProcess(args);
+        ProcessResult processResult = executeProcess(null, args);
 
         return processResult.outputLines;
     }
@@ -551,20 +593,22 @@ public class RunnerToolWindow
         args.add("--gtest_output=xml:" + resultFile.toString()); // whitespaces in filename
         args.addAll(_additionalArguments);
 
-        ProcessResult processResult = executeProcess(args);
+        ProcessResult processResult = executeProcess(null, args);
 
         return processResult.outputLines;
     }
 
-    private ProcessResult executeProcess(List<String> command) throws IOException, InterruptedException
+    private ProcessResult executeProcess(IProcessOutputObserver observer, List<String> command)
+            throws IOException, InterruptedException
     {
         String[] args = new String[command.size()];
         command.toArray(args);
 
-        return executeProcess(args);
+        return executeProcess(observer, args);
     }
 
-    private ProcessResult executeProcess(String... command) throws IOException, InterruptedException
+    private ProcessResult executeProcess(IProcessOutputObserver observer, String... command)
+            throws IOException, InterruptedException
     {
         ProcessBuilder pb = new ProcessBuilder(command);
 
@@ -584,6 +628,7 @@ public class RunnerToolWindow
                     break;
                 }
 
+                observer.onNewLine(line);
                 outputLines.add(line);
             }
         }
