@@ -17,9 +17,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
+import java.util.*;
 import java.util.List;
 
 public class RunnerToolWindow
@@ -38,6 +36,7 @@ public class RunnerToolWindow
     private JTextField _runSummary;
     private JProgressBar _progressBar;
     private JPanel _summaryCards;
+    private JScrollPane _testTreeScrollPane;
 
     private DefaultTreeModel _testListModel;
 
@@ -341,6 +340,10 @@ public class RunnerToolWindow
 
     private void discoverTests()
     {
+        // If a discovery operation changes number of suites, then the restore will not work correct.
+        final HashSet<Integer> expansionState = Utils.getExpansionStates(_testTree);
+        final int verticalScrollValue = _testTreeScrollPane.getVerticalScrollBar().getValue();
+
         DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)_testListModel.getRoot();
         rootNode.removeAllChildren();
         _testListModel.reload();
@@ -377,7 +380,7 @@ public class RunnerToolWindow
             @Override
             protected void done()
             {
-                onTestDiscoveryFinished();
+                onTestDiscoveryFinished(expansionState, verticalScrollValue);
             }
         };
 
@@ -402,7 +405,7 @@ public class RunnerToolWindow
         }
     }
 
-    private void onTestDiscoveryFinished()
+    private void onTestDiscoveryFinished(HashSet<Integer> expansionState, final int verticalScrollValue)
     {
         _stopButton.setEnabled(false);
         _progressBar.setIndeterminate(false);
@@ -426,6 +429,16 @@ public class RunnerToolWindow
             _consoleOutputWindow.textArea1.append("\n");
 
             processDiscoveryResults(processResult.outputLines, rootNode);
+
+            Utils.setExpansionStates(_testTree, expansionState);
+            SwingUtilities.invokeLater(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    _testTreeScrollPane.getVerticalScrollBar().setValue(verticalScrollValue);
+                }
+            });
 
             onTreeSelectionChanged(new TreeSelectionEvent(_testTree, _testTree.getSelectionPath(), true, null, null));
         }
@@ -791,22 +804,21 @@ public class RunnerToolWindow
 
         if (runMode == TestRunMode.All)
         {
-            _testSuites = new TestSuites(Integer.parseInt(testCount), "", 0);
-
             _testListModel.reload();
             Utils.expandAll(_testTree);
         }
 
+        _testSuites = new TestSuites(Integer.parseInt(testCount), "", 0);
         _testSuites.setExecutionTime((int) (Double.parseDouble(time) * 1000));
         _testSuites.setStatus(failures.equals("0") ? TestCaseStatus.Success : TestCaseStatus.Failed);
         _testSuites.setTimestamp(timestamp);
         _testSuites.setDisabledTestCount(Integer.parseInt(disabled));
         _testSuites.setFailedTestCount(Integer.parseInt(failed));
 
-        String runSummary = String.format("Tests: %d, disabled: %d, failed: %d,  timestamp: %s, time: %d ms",
+        String runSummary = String.format("Run tests: %d, failed: %d, disabled: %d, timestamp: %s, time: %d ms",
                 _testSuites.getTestCount(),
-                _testSuites.getDisabledTestCount(),
                 _testSuites.getFailedTestCount(),
+                _testSuites.getDisabledTestCount(),
                 _testSuites.getTimestamp(),
                 _testSuites.getExecutionTime());
 

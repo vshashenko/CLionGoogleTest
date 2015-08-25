@@ -23,7 +23,7 @@
         </properties>
         <border type="none"/>
         <children>
-          <scrollpane id="44734">
+          <scrollpane id="44734" binding="_testTreeScrollPane">
             <constraints>
               <splitpane position="left"/>
             </constraints>
