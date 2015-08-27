@@ -1,4 +1,3 @@
-- When running selected tests only, reset the state only for selected items.
 - Tree icons for suites
 - Improve icons
 - Handle xml parsing errors.

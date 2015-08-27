@@ -341,8 +341,10 @@ public class RunnerToolWindow
     private void discoverTests()
     {
         // If a discovery operation changes number of suites, then the restore will not work correct.
-        final HashSet<Integer> expansionState = Utils.getExpansionStates(_testTree);
-        final int verticalScrollValue = _testTreeScrollPane.getVerticalScrollBar().getValue();
+        final TestTreeState testTreeState = new TestTreeState();
+        testTreeState.expansionState = Utils.getExpansionStates(_testTree);
+        testTreeState.selectionRows = _testTree.getSelectionRows();
+        testTreeState.verticalScrollValue = _testTreeScrollPane.getVerticalScrollBar().getValue();
 
         DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)_testListModel.getRoot();
         rootNode.removeAllChildren();
@@ -380,7 +382,7 @@ public class RunnerToolWindow
             @Override
             protected void done()
             {
-                onTestDiscoveryFinished(expansionState, verticalScrollValue);
+                onTestDiscoveryFinished(testTreeState);
             }
         };
 
@@ -405,7 +407,7 @@ public class RunnerToolWindow
         }
     }
 
-    private void onTestDiscoveryFinished(HashSet<Integer> expansionState, final int verticalScrollValue)
+    private void onTestDiscoveryFinished(final TestTreeState testTreeState)
     {
         _stopButton.setEnabled(false);
         _progressBar.setIndeterminate(false);
@@ -430,17 +432,17 @@ public class RunnerToolWindow
 
             processDiscoveryResults(processResult.outputLines, rootNode);
 
-            Utils.setExpansionStates(_testTree, expansionState);
+            Utils.setExpansionStates(_testTree, testTreeState.expansionState);
+            _testTree.setSelectionRows(testTreeState.selectionRows);
+
             SwingUtilities.invokeLater(new Runnable()
             {
                 @Override
                 public void run()
                 {
-                    _testTreeScrollPane.getVerticalScrollBar().setValue(verticalScrollValue);
+                    _testTreeScrollPane.getVerticalScrollBar().setValue(testTreeState.verticalScrollValue);
                 }
             });
-
-            onTreeSelectionChanged(new TreeSelectionEvent(_testTree, _testTree.getSelectionPath(), true, null, null));
         }
 //        catch (ExecutionException ex)
 //        {
@@ -460,7 +462,7 @@ public class RunnerToolWindow
     private void runTests(List<String> testList, final TestRunMode runMode)
     {
         DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)_testListModel.getRoot();
-        resetAllTestsToNotRun(rootNode);
+        resetTestsToNotRun(rootNode, testList);
 
         //final Path resultFile = Files.createTempFile("gtestrunner", "");
         _resultFile = new File("/home/shashenk/Devel/gtestrunner_results.txt").toPath();
@@ -859,6 +861,32 @@ public class RunnerToolWindow
                     testCase.setStatus(TestCaseStatus.NotRun);
 
                     _testListModel.nodeChanged(node);
+                }
+            }
+        }
+    }
+
+    private void resetTestsToNotRun(DefaultMutableTreeNode parent, List<String> testList)
+    {
+        Enumeration<DefaultMutableTreeNode> nodeEnum = parent.depthFirstEnumeration();
+
+        while(nodeEnum.hasMoreElements())
+        {
+            DefaultMutableTreeNode node = nodeEnum.nextElement();
+
+            if (node.getUserObject() instanceof TestCase)
+            {
+                TestCase testCase = (TestCase)node.getUserObject();
+
+                if (testList.contains(testCase.getFullName()) ||
+                    testList.contains(testCase.getSuite().getName() + ".*"))
+                {
+                    if (testCase.getStatus() != TestCaseStatus.NotRun)
+                    {
+                        testCase.setStatus(TestCaseStatus.NotRun);
+
+                        _testListModel.nodeChanged(node);
+                    }
                 }
             }
         }
