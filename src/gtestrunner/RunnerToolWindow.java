@@ -1,6 +1,9 @@
 package gtestrunner;
 
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.w3c.dom.*;
 
 import javax.swing.*;
@@ -55,6 +58,9 @@ public class RunnerToolWindow
     private SwingWorker<ProcessResult, String> _testDiscoveryWorker;
     private Process _process;
 
+    private Project _project;
+    private VirtualFileSystem _virtualFileSystem;
+
     RunnerToolWindow()
     {
         _additionalArguments = new ArrayList<>();
@@ -104,10 +110,10 @@ public class RunnerToolWindow
                 //_renderer.add(c);
                 //_renderer.setBackground(c.getBackground());
 
-                DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
                 if (node.getUserObject() instanceof TestCase)
                 {
-                    TestCase testCase = (TestCase)node.getUserObject();
+                    TestCase testCase = (TestCase) node.getUserObject();
 
                     switch (testCase.getStatus())
                     {
@@ -196,6 +202,58 @@ public class RunnerToolWindow
                 onTreeSelectionChanged(e);
             }
         });
+
+        _testTree.addMouseListener(new MouseAdapter()
+        {
+            public void mousePressed(MouseEvent e)
+            {
+                JTree tree = ((JTree) e.getComponent());
+                int row = tree.getRowForLocation(e.getX(), e.getY());
+                if (row != -1)
+                {
+                    if (e.getClickCount() == 2)
+                    {
+                        TreePath path = tree.getPathForLocation(e.getX(), e.getY());
+                        onTreeItemActivated(path);
+                    }
+                }
+            }
+        });
+    }
+
+    private void onTreeItemActivated(TreePath selPath)
+    {
+        Object[] objects = selPath.getPath();
+
+        if (objects.length == 3)
+        {
+            DefaultMutableTreeNode obj2 = (DefaultMutableTreeNode) objects[2];
+            TestCase testCase = (TestCase) obj2.getUserObject();
+
+            try
+            {
+                ProcessResult pr = executeProcess(null, "grep", "-nwrI", "--include=*.cpp", testCase.getName(), _project.getBaseDir().getPath());
+
+                if (pr.outputLines.size() > 0)
+                {
+                    String line = pr.outputLines.get(0);
+                    String[] parts = line.split(":");
+                    String filePath = parts[0];
+                    int lineNumber = Integer.parseInt(parts[1]) - 1;
+
+                    VirtualFile file = _virtualFileSystem.findFileByPath(filePath);
+                    OpenFileDescriptor fileDescriptor = new OpenFileDescriptor(_project, file, lineNumber, 0);
+                    fileDescriptor.navigateInEditor(_project, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                StringWriter sw = new StringWriter();
+                ex.printStackTrace(new PrintWriter(sw));
+
+                _errorArea.setText(sw.toString());
+            }
+        }
     }
 
     public JComponent getRootView()
@@ -236,6 +294,9 @@ public class RunnerToolWindow
         _errorArea.append("\n");
         _errorArea.append(project.getWorkspaceFile().getPath());
         _errorArea.append("\n");
+
+        _virtualFileSystem = project.getBaseDir().getFileSystem();
+        _project = project;
     }
 
     private void onDiscoverButtonClicked(ActionEvent e)
@@ -643,7 +704,11 @@ public class RunnerToolWindow
                     break;
                 }
 
-                observer.onNewLine(line);
+                if (observer != null)
+                {
+                    observer.onNewLine(line);
+                }
+
                 outputLines.add(line);
             }
         }

@@ -10,7 +10,7 @@
 - Execution times in right-aligned column of the tree control
 - No horizontal scroll bar
 - Go to failed line of source code from failure report
-- Go to the test source code on a tree item double click.
+- Go to the test source code on a tree item double click: implement without calling grep, support not only *.cpp.
 - Handle if the process crashes or is not a gtest exe or not found ("No output from the gtest executable. Probably it crashed or is incorrect.".)
 - Stand-alone app in release
 - Problem if "Build all" selected (or no active config selected).
