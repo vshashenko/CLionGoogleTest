@@ -1,9 +1,5 @@
 package gtestrunner;
 
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.w3c.dom.*;
 
 import javax.swing.*;
@@ -58,8 +54,7 @@ public class RunnerToolWindow
     private SwingWorker<ProcessResult, String> _testDiscoveryWorker;
     private Process _process;
 
-    private Project _project;
-    private VirtualFileSystem _virtualFileSystem;
+    private IExternalCommandExecutor _externalCommandExecutor;
 
     RunnerToolWindow()
     {
@@ -232,18 +227,9 @@ public class RunnerToolWindow
 
             try
             {
-                ProcessResult pr = executeProcess(null, "grep", "-nwrI", "--include=*.cpp", testCase.getName(), _project.getBaseDir().getPath());
-
-                if (pr.outputLines.size() > 0)
+                if (_externalCommandExecutor != null)
                 {
-                    String line = pr.outputLines.get(0);
-                    String[] parts = line.split(":");
-                    String filePath = parts[0];
-                    int lineNumber = Integer.parseInt(parts[1]) - 1;
-
-                    VirtualFile file = _virtualFileSystem.findFileByPath(filePath);
-                    OpenFileDescriptor fileDescriptor = new OpenFileDescriptor(_project, file, lineNumber, 0);
-                    fileDescriptor.navigateInEditor(_project, true);
+                    _externalCommandExecutor.gotoTestCase(testCase.getName());
                 }
             }
             catch (Exception ex)
@@ -274,29 +260,9 @@ public class RunnerToolWindow
         Collections.addAll(_additionalArguments, params.split(" "));
     }
 
-    public void setProject(Project project)
+    public void setExternalCommandExecutor(IExternalCommandExecutor externalCommandExecutor)
     {
-        _errorArea.append(project.toString());
-        _errorArea.append("\n");
-        _errorArea.append(project.getBasePath());
-        _errorArea.append("\n");
-        _errorArea.append(project.getLocationHash());
-        _errorArea.append("\n");
-        _errorArea.append(project.getName());
-        _errorArea.append("\n");
-        _errorArea.append(project.getPresentableUrl());
-        _errorArea.append("\n");
-        _errorArea.append(project.getProjectFilePath());
-        _errorArea.append("\n");
-        _errorArea.append(project.getBaseDir().getPath());
-        _errorArea.append("\n");
-        _errorArea.append(project.getProjectFile().getPath());
-        _errorArea.append("\n");
-        _errorArea.append(project.getWorkspaceFile().getPath());
-        _errorArea.append("\n");
-
-        _virtualFileSystem = project.getBaseDir().getFileSystem();
-        _project = project;
+        _externalCommandExecutor = externalCommandExecutor;
     }
 
     private void onDiscoverButtonClicked(ActionEvent e)
@@ -424,8 +390,14 @@ public class RunnerToolWindow
             @Override
             protected ProcessResult doInBackground() throws Exception
             {
-                return executeProcess(new IProcessOutputObserver()
+                return Utils.executeProcess(new IProcessOutputObserver()
                 {
+                    @Override
+                    public void onProcessCreated(Process process)
+                    {
+                        _process = process;
+                    }
+
                     @Override
                     public void onNewLine(String s)
                     {
@@ -546,8 +518,14 @@ public class RunnerToolWindow
             @Override
             protected ProcessResult doInBackground() throws Exception
             {
-                return executeProcess(new IProcessOutputObserver()
+                return Utils.executeProcess(new IProcessOutputObserver()
                 {
+                    @Override
+                    public void onProcessCreated(Process process)
+                    {
+                        _process = process;
+                    }
+
                     @Override
                     public void onNewLine(String s)
                     {
@@ -653,7 +631,7 @@ public class RunnerToolWindow
         args.add("--gtest_list_tests");
         args.addAll(_additionalArguments);
 
-        ProcessResult processResult = executeProcess(null, args);
+        ProcessResult processResult = Utils.executeProcess(null, args);
 
         return processResult.outputLines;
     }
@@ -669,58 +647,9 @@ public class RunnerToolWindow
         args.add("--gtest_output=xml:" + resultFile.toString()); // whitespaces in filename
         args.addAll(_additionalArguments);
 
-        ProcessResult processResult = executeProcess(null, args);
+        ProcessResult processResult = Utils.executeProcess(null, args);
 
         return processResult.outputLines;
-    }
-
-    private ProcessResult executeProcess(IProcessOutputObserver observer, List<String> command)
-            throws IOException, InterruptedException
-    {
-        String[] args = new String[command.size()];
-        command.toArray(args);
-
-        return executeProcess(observer, args);
-    }
-
-    private ProcessResult executeProcess(IProcessOutputObserver observer, String... command)
-            throws IOException, InterruptedException
-    {
-        ProcessBuilder pb = new ProcessBuilder(command);
-
-        pb.redirectErrorStream(true);
-        _process = pb.start();
-
-        List<String> outputLines = new ArrayList<>();
-
-        try(InputStreamReader streamReader = new InputStreamReader(_process.getInputStream());
-            BufferedReader bufferedReader = new BufferedReader(streamReader))
-        {
-            while (true)
-            {
-                String line = bufferedReader.readLine();
-                if (line == null)
-                {
-                    break;
-                }
-
-                if (observer != null)
-                {
-                    observer.onNewLine(line);
-                }
-
-                outputLines.add(line);
-            }
-        }
-
-        _process.waitFor();
-
-        ProcessResult processResult = new ProcessResult();
-
-        processResult.exitValue = _process.exitValue();
-        processResult.outputLines = outputLines;
-
-        return processResult;
     }
 
     private void processDiscoveryResults(List<String> outputLines, DefaultMutableTreeNode rootNode)

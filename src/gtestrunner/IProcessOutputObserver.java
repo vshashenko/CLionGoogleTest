@@ -2,5 +2,7 @@ package gtestrunner;
 
 public interface IProcessOutputObserver
 {
- public void onNewLine(String s);
+    void onProcessCreated(Process process);
+
+    void onNewLine(String s);
 }

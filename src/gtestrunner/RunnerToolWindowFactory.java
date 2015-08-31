@@ -1,8 +1,10 @@
 package gtestrunner;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -37,7 +39,14 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
         _consoleWindow = new ConsoleOutputWindow();
 
         _runnerToolWindow.setConsoleOutputWindow(_consoleWindow);
-        _runnerToolWindow.setProject(project);
+        _runnerToolWindow.setExternalCommandExecutor(new IExternalCommandExecutor()
+        {
+            @Override
+            public void gotoTestCase(String caseName) throws Exception
+            {
+                openTestCase(caseName);
+            }
+        });
 
         updateExecutablePath();
 
@@ -46,7 +55,7 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
         virtualFileSystem.addVirtualFileListener(new VirtualFileAdapter()
         {
             @Override
-            public void contentsChanged(VirtualFileEvent event)
+            public void contentsChanged(@NotNull VirtualFileEvent event)
             {
                 onFileContentsChanged(event);
             }
@@ -117,6 +126,24 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
             ex.printStackTrace(new PrintWriter(sw));
 
             JOptionPane.showMessageDialog(null, sw.toString());
+        }
+    }
+
+    private void openTestCase(String caseName) throws Exception
+    {
+        ProcessResult pr = Utils.executeProcess(null, "grep", "-nwrI", "--include=*.cpp", caseName, _project.getBaseDir().getPath());
+        VirtualFileSystem virtualFileSystem = _project.getBaseDir().getFileSystem();
+
+        if (pr.outputLines.size() > 0)
+        {
+            String line = pr.outputLines.get(0);
+            String[] parts = line.split(":");
+            String filePath = parts[0];
+            int lineNumber = Integer.parseInt(parts[1]) - 1;
+
+            VirtualFile file = virtualFileSystem.findFileByPath(filePath);
+            OpenFileDescriptor fileDescriptor = new OpenFileDescriptor(_project, file, lineNumber, 0);
+            fileDescriptor.navigateInEditor(_project, true);
         }
     }
 }

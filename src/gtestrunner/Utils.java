@@ -1,7 +1,10 @@
 package gtestrunner;
 
 import javax.swing.*;
-import java.util.HashMap;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -68,5 +71,59 @@ public class Utils
         }
 
         return builder.toString();
+    }
+
+    public static ProcessResult executeProcess(IProcessOutputObserver observer, List<String> command)
+            throws IOException, InterruptedException
+    {
+        String[] args = new String[command.size()];
+        command.toArray(args);
+
+        return executeProcess(observer, args);
+    }
+
+    public static ProcessResult executeProcess(IProcessOutputObserver observer, String... command)
+            throws IOException, InterruptedException
+    {
+        ProcessBuilder pb = new ProcessBuilder(command);
+
+        pb.redirectErrorStream(true);
+        Process process = pb.start();
+
+        if (observer != null)
+        {
+            observer.onProcessCreated(process);
+        }
+
+        List<String> outputLines = new ArrayList<>();
+
+        try(InputStreamReader streamReader = new InputStreamReader(process.getInputStream());
+            BufferedReader bufferedReader = new BufferedReader(streamReader))
+        {
+            while (true)
+            {
+                String line = bufferedReader.readLine();
+                if (line == null)
+                {
+                    break;
+                }
+
+                if (observer != null)
+                {
+                    observer.onNewLine(line);
+                }
+
+                outputLines.add(line);
+            }
+        }
+
+        process.waitFor();
+
+        ProcessResult processResult = new ProcessResult();
+
+        processResult.exitValue = process.exitValue();
+        processResult.outputLines = outputLines;
+
+        return processResult;
     }
 }
