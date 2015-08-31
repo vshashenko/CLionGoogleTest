@@ -811,11 +811,10 @@ public class RunnerToolWindow
         _testSuites.setDisabledTestCount(Integer.parseInt(disabled));
         _testSuites.setFailedTestCount(Integer.parseInt(failed));
 
-        String runSummary = String.format("Run: %d, failed: %d, disabled: %d, timestamp: %s, time: %d ms",
+        String runSummary = String.format("Run: %d, failed: %d, disabled: %d, time: %d ms",
                 _testSuites.getTestCount(),
                 _testSuites.getFailedTestCount(),
                 _testSuites.getDisabledTestCount(),
-                _testSuites.getTimestamp(),
                 _testSuites.getExecutionTime());
 
         _runSummary.setText(runSummary);
