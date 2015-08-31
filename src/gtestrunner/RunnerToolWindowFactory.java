@@ -42,6 +42,12 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
         _runnerToolWindow.setExternalCommandExecutor(new IExternalCommandExecutor()
         {
             @Override
+            public void gotoFile(String filePath, int lineNumber) throws Exception
+            {
+                openFile(filePath, lineNumber);
+            }
+
+            @Override
             public void gotoTestCase(String caseName) throws Exception
             {
                 openTestCase(caseName);
@@ -132,7 +138,6 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
     private void openTestCase(String caseName) throws Exception
     {
         ProcessResult pr = Utils.executeProcess(null, "grep", "-nwrI", "--include=*.cpp", caseName, _project.getBaseDir().getPath());
-        VirtualFileSystem virtualFileSystem = _project.getBaseDir().getFileSystem();
 
         if (pr.outputLines.size() > 0)
         {
@@ -141,9 +146,16 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
             String filePath = parts[0];
             int lineNumber = Integer.parseInt(parts[1]) - 1;
 
-            VirtualFile file = virtualFileSystem.findFileByPath(filePath);
-            OpenFileDescriptor fileDescriptor = new OpenFileDescriptor(_project, file, lineNumber, 0);
-            fileDescriptor.navigateInEditor(_project, true);
+            openFile(filePath, lineNumber);
         }
+    }
+
+    private void openFile(String filePath, int lineNumber) throws Exception
+    {
+        VirtualFileSystem virtualFileSystem = _project.getBaseDir().getFileSystem();
+
+        VirtualFile file = virtualFileSystem.findFileByPath(filePath);
+        OpenFileDescriptor fileDescriptor = new OpenFileDescriptor(_project, file, lineNumber, 0);
+        fileDescriptor.navigateInEditor(_project, true);
     }
 }

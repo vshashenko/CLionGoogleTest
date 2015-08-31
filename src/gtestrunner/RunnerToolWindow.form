@@ -51,7 +51,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="283fa" class="javax.swing.JTextArea" binding="_errorArea">
+              <component id="32904" class="javax.swing.JEditorPane" binding="_errorArea">
                 <constraints/>
                 <properties>
                   <editable value="false"/>

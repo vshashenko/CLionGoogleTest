@@ -1,8 +1,10 @@
 package gtestrunner;
 
+import com.intellij.ui.HyperlinkAdapter;
 import org.w3c.dom.*;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -23,7 +25,7 @@ public class RunnerToolWindow
 {
     private JPanel _rootView;
     private JTree _testTree;
-    private JTextArea _errorArea;
+    private JEditorPane _errorArea;
     private JButton _discoverButton;
     private JButton _runAllButton;
     private JButton _runSelectedButton;
@@ -214,6 +216,20 @@ public class RunnerToolWindow
                 }
             }
         });
+
+        _errorArea.setContentType("text/html");
+
+        _errorArea.addHyperlinkListener(new HyperlinkAdapter()
+        {
+            @Override
+            protected void hyperlinkActivated(HyperlinkEvent hyperlinkEvent)
+            {
+                if (hyperlinkEvent.getEventType() == HyperlinkEvent.EventType.ACTIVATED)
+                {
+                    onHyperlinkActivated(hyperlinkEvent);
+                }
+            }
+        });
     }
 
     private void onTreeItemActivated(TreePath selPath)
@@ -239,6 +255,30 @@ public class RunnerToolWindow
 
                 _errorArea.setText(sw.toString());
             }
+        }
+    }
+
+    private void onHyperlinkActivated(HyperlinkEvent hyperlinkEvent)
+    {
+        try
+        {
+            if (_externalCommandExecutor != null)
+            {
+
+                String link = hyperlinkEvent.getURL().toString().substring(5);
+                String[] linkParts = link.split(":");
+                String filePath = linkParts[0];
+                int lineNumber = Integer.parseInt(linkParts[1]) - 1;
+
+                _externalCommandExecutor.gotoFile(filePath, lineNumber);
+            }
+        }
+        catch (Exception ex)
+        {
+            StringWriter sw = new StringWriter();
+            ex.printStackTrace(new PrintWriter(sw));
+
+            _errorArea.setText(sw.toString());
         }
     }
 
@@ -355,11 +395,8 @@ public class RunnerToolWindow
                     break;
 
                 case Failed:
-                    String message = String.format("The test failed in %d place(s).\n\n", testCase.getFailures().size());
+                    String message = formatFailures(testCase.getFailures());
                     _errorArea.setText(message);
-
-                    String failures = Utils.stringJoin("\n\n", testCase.getFailures());
-                    _errorArea.append(failures);
                     break;
             }
         }
@@ -883,5 +920,36 @@ public class RunnerToolWindow
                 }
             }
         }
+    }
+
+    private static String formatFailures(List<String> failures)
+    {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("<html>");
+        stringBuilder.append(String.format("The test has %d failure(s).", failures.size()));
+        stringBuilder.append("<br><br>");
+
+        for (String failure : failures)
+        {
+            String[] failureLines = failure.split("\n");
+
+            for (String line : failureLines)
+            {
+                if (line.contains(":") && line.contains("/"))
+                {
+                    stringBuilder.append(String.format("<a href=\"file://%s\">%s</a>", line, line));
+                }
+                else
+                {
+                    stringBuilder.append(line);
+                }
+
+                stringBuilder.append("<br>");
+            }
+        }
+
+        stringBuilder.append("</html>");
+
+        return stringBuilder.toString();
     }
 }
