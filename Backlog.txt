@@ -16,7 +16,6 @@
 - Problem if "Build all" selected (or no active config selected).
 - Dropdown list to select gtest target
 - Autodetect target with gtest
-- Update the path to gtest exe if project settings changed (vfs change listener?)
 - Debug selected tests (runs with clion debugger command)
 - Kill running gtest process on app/Clion exit.
 - Filter window for the test tree

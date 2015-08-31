@@ -3,6 +3,9 @@ package gtestrunner;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
@@ -19,6 +22,7 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
 {
     private RunnerToolWindow _runnerToolWindow;
     private ConsoleOutputWindow _consoleWindow;
+    private Project _project;
 
     public RunnerToolWindowFactory()
     {
@@ -27,24 +31,26 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow)
     {
+        _project = project;
+
         _runnerToolWindow = new RunnerToolWindow();
         _consoleWindow = new ConsoleOutputWindow();
 
         _runnerToolWindow.setConsoleOutputWindow(_consoleWindow);
         _runnerToolWindow.setProject(project);
 
-        try
-        {
-            ExecutableInfo exeInfo = readExecutablePath(project);
-            _runnerToolWindow.setExecutablePath(exeInfo.command, exeInfo.arguments);
-        }
-        catch (Exception ex)
-        {
-            StringWriter sw = new StringWriter();
-            ex.printStackTrace(new PrintWriter(sw));
+        updateExecutablePath();
 
-            JOptionPane.showMessageDialog(null, sw.toString());
-        }
+        VirtualFileSystem virtualFileSystem = project.getBaseDir().getFileSystem();
+
+        virtualFileSystem.addVirtualFileListener(new VirtualFileAdapter()
+        {
+            @Override
+            public void contentsChanged(VirtualFileEvent event)
+            {
+                onFileContentsChanged(event);
+            }
+        });
 
         // /home/shashenk/.clion10/system/cmake/generated/e592c795/e592c795/Debug/GoogleTestSample.cbp
         // C:\Users\v.shashenko\.clion10\system\cmake\generated\7c65729b\7c65729b\Debug/GoogleTestSample.cbp
@@ -60,7 +66,7 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
         toolWindow.getContentManager().addContent(consoleContent);
     }
 
-    public static ExecutableInfo readExecutablePath(@NotNull Project project) throws Exception
+    private static ExecutableInfo readExecutablePath(@NotNull Project project) throws Exception
     {
         String workspacePath = project.getWorkspaceFile().getPath();
         TargetInfo targetInfo = CLionProjectReader.readSelectedTarget(workspacePath);
@@ -86,5 +92,31 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
         exeInfo.arguments = targetInfo.params;
 
         return exeInfo;
+    }
+
+    private void onFileContentsChanged(VirtualFileEvent event)
+    {
+        String workspacePath = _project.getWorkspaceFile().getPath();
+
+        if (event.getFile().getPath().equals(workspacePath))
+        {
+            updateExecutablePath();
+        }
+    }
+
+    private void updateExecutablePath()
+    {
+        try
+        {
+            ExecutableInfo exeInfo = readExecutablePath(_project);
+            _runnerToolWindow.setExecutablePath(exeInfo.command, exeInfo.arguments);
+        }
+        catch (Exception ex)
+        {
+            StringWriter sw = new StringWriter();
+            ex.printStackTrace(new PrintWriter(sw));
+
+            JOptionPane.showMessageDialog(null, sw.toString());
+        }
     }
 }
