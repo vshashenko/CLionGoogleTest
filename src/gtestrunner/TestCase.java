@@ -48,7 +48,6 @@ public class TestCase extends TestItem
     @Override
     public String toString()
     {
-        return String.format("%s -- %s ms", super.getName(), super.getExecutionTime());
-        //return getName();
+        return super.getName();
     }
 }

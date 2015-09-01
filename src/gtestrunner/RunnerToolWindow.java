@@ -7,10 +7,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.awt.*;
@@ -90,11 +87,8 @@ public class RunnerToolWindow
             }
         });
 
-        _testTree.setCellRenderer(new DefaultTreeCellRenderer()
+        _testTree.setCellRenderer(new TreeRenderer()
         {
-            JPanel _renderer = new JPanel();
-            JLabel _timeLabel = new JLabel("50 ms");
-
             @Override
             public Component getTreeCellRendererComponent(JTree tree,
                                                           Object value,
@@ -113,28 +107,30 @@ public class RunnerToolWindow
                 if (node.getUserObject() instanceof TestCase)
                 {
                     TestCase testCase = (TestCase) node.getUserObject();
+                    String timeString = Integer.toString(testCase.getExecutionTime()) + " ms";
 
                     switch (testCase.getStatus())
                     {
                         case Disabled:
-                            setIcon(_disabledIcon);
+                            getLabel().setIcon(_disabledIcon);
                             break;
 
                         case NotRun:
-                            setIcon(_notRunIcon);
+                            getLabel().setIcon(_notRunIcon);
                             break;
 
                         case Failed:
-                            setIcon(_failedIcon);
+                            getLabel().setIcon(_failedIcon);
+                            getRightLabel().setText(timeString);
                             break;
 
                         case Success:
-                            setIcon(_successIcon);
+                            getLabel().setIcon(_successIcon);
+                            getRightLabel().setText(timeString);
                             break;
                     }
                 }
 
-                //return _renderer;
                 return c;
             }
         });
