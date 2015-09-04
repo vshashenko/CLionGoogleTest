@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class RunnerToolWindow
 {
@@ -254,7 +255,7 @@ public class RunnerToolWindow
                 StringWriter sw = new StringWriter();
                 ex.printStackTrace(new PrintWriter(sw));
 
-                _errorArea.setText(sw.toString());
+                _errorArea.setText(sw.toString().replace("\n", "<br>"));
             }
         }
     }
@@ -279,7 +280,7 @@ public class RunnerToolWindow
             StringWriter sw = new StringWriter();
             ex.printStackTrace(new PrintWriter(sw));
 
-            _errorArea.setText(sw.toString());
+            _errorArea.setText(sw.toString().replace("\n", "<br>"));
         }
     }
 
@@ -521,12 +522,19 @@ public class RunnerToolWindow
 //        catch (InterruptedException ex)
 //        {
 //        }
+        catch (DiscoveryParsingException ex)
+        {
+            //TODO write message about failed discovery in the test tree window instead?
+            _errorArea.setText(
+                    "The output from the test executable doesn't appear to be a list of tests.<br>" +
+                    "Please check Console tab for details.");
+        }
         catch (Exception ex)
         {
             StringWriter sw = new StringWriter();
             ex.printStackTrace(new PrintWriter(sw));
 
-            _errorArea.setText("Exception:\n" + sw.toString());
+            _errorArea.setText("Exception:\n" + sw.toString().replace("\n", "<br>"));
         }
     }
 
@@ -644,7 +652,7 @@ public class RunnerToolWindow
             StringWriter sw = new StringWriter();
             ex.printStackTrace(new PrintWriter(sw));
 
-            _errorArea.setText("Exception:\n" + sw.toString());
+            _errorArea.setText("Exception:\n" + sw.toString().replace("\n", "<br>"));
         }
         finally
         {
@@ -691,33 +699,41 @@ public class RunnerToolWindow
     }
 
     private void processDiscoveryResults(List<String> outputLines, DefaultMutableTreeNode rootNode)
+            throws DiscoveryParsingException
     {
         int testCount = 0;
         TestSuite currentSuite = null;
         DefaultMutableTreeNode suiteNode = null;
 
+        Pattern testSuiteNameTemplate = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*\\.$");
+        Pattern testCaseNameTemplate = Pattern.compile("^  [a-zA-Z_][a-zA-Z0-9_]*$");
+
         for (String currentLine : outputLines)
         {
-            currentLine = currentLine.trim();
-
-            if (currentLine.endsWith("."))
+            if (testSuiteNameTemplate.matcher(currentLine).matches())
             {
-                if (currentLine.length() > 1)
-                {
-                    String suiteName = currentLine.substring(0, currentLine.length() - 1);
-                    currentSuite = new TestSuite(suiteName);
+                String suiteName = currentLine.substring(0, currentLine.length() - 1);
+                currentSuite = new TestSuite(suiteName);
 
-                    suiteNode = new DefaultMutableTreeNode(currentSuite);
-                    rootNode.add(suiteNode);
-                }
+                suiteNode = new DefaultMutableTreeNode(currentSuite);
+                rootNode.add(suiteNode);
             }
-            else
+            else if (testCaseNameTemplate.matcher(currentLine).matches())
             {
-                TestCase testCase = new TestCase(currentSuite, currentLine);
+                if (currentSuite == null)
+                {
+                    throw new DiscoveryParsingException();
+                }
+
+                TestCase testCase = new TestCase(currentSuite, currentLine.substring(2));
                 testCount++;
 
                 DefaultMutableTreeNode caseNode = new DefaultMutableTreeNode(testCase);
                 suiteNode.add(caseNode);
+            }
+            else
+            {
+                throw new DiscoveryParsingException();
             }
         }
 

@@ -1,7 +1,6 @@
 - Tree icons for suites
 - Improve icons
 - Handle xml parsing errors.
-- Proper handling of unexpected output from test discovery command.
 - Add progress indication while executing tests (based on prev. execution times?)
 - Handle crashed gtest process. Mark crashed test as failed in the test tree.
 - Problem: dicover tests, run selected test-suite, add another test to the suite, run selected again -- no new tests. So a discover before run is still better.
