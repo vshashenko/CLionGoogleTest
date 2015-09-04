@@ -143,13 +143,13 @@
         </properties>
         <border type="none"/>
         <children>
-          <component id="a7aac" class="javax.swing.JTextField" binding="_runSummary">
+          <component id="835fd" class="javax.swing.JLabel" binding="_discoveryStatus">
             <constraints>
-              <card name="SummaryCard"/>
+              <card name="DiscoveryCard"/>
             </constraints>
             <properties>
-              <editable value="false"/>
-              <text value="Test run summary"/>
+              <icon value="gtestrunner/images/NotRun.png"/>
+              <text value="Press Refresh button to discover tests"/>
             </properties>
           </component>
           <component id="3927" class="javax.swing.JProgressBar" binding="_progressBar">
@@ -161,6 +161,43 @@
               <stringPainted value="false"/>
             </properties>
           </component>
+          <grid id="2dc4c" layout-manager="FlowLayout" hgap="20" vgap="5" flow-align="0">
+            <constraints>
+              <card name="SummaryCard"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="26db8" class="javax.swing.JLabel" binding="_summaryPassed">
+                <constraints/>
+                <properties>
+                  <icon value="gtestrunner/images/Success.png"/>
+                  <text value="Label"/>
+                </properties>
+              </component>
+              <component id="304d6" class="javax.swing.JLabel" binding="_summaryFailed">
+                <constraints/>
+                <properties>
+                  <icon value="gtestrunner/images/Failed.png"/>
+                  <text value="Label"/>
+                </properties>
+              </component>
+              <component id="a77ad" class="javax.swing.JLabel" binding="_summaryDisabled">
+                <constraints/>
+                <properties>
+                  <icon value="gtestrunner/images/Disabled.png"/>
+                  <text value="Label"/>
+                </properties>
+              </component>
+              <component id="e9649" class="javax.swing.JLabel" binding="_summaryTotalTime">
+                <constraints/>
+                <properties>
+                  <icon value="gtestrunner/images/TotalTime.png"/>
+                  <text value="Label"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
         </children>
       </grid>
       <component id="65b63" class="javax.swing.JTextField" binding="_executablePathArea">

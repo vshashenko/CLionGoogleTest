@@ -34,10 +34,14 @@ public class RunnerToolWindow
     private JButton _collapseAllButton;
     private JSplitPane _splitPane;
     private JTextField _executablePathArea;
-    private JTextField _runSummary;
     private JProgressBar _progressBar;
     private JPanel _summaryCards;
     private JScrollPane _testTreeScrollPane;
+    private JLabel _summaryPassed;
+    private JLabel _summaryFailed;
+    private JLabel _summaryDisabled;
+    private JLabel _summaryTotalTime;
+    private JLabel _discoveryStatus;
 
     private DefaultTreeModel _testListModel;
 
@@ -84,9 +88,6 @@ public class RunnerToolWindow
                 _splitPane.setDividerLocation(0.5);
             }
         });
-
-        //OpenSourceUtil.openSourcesFrom(null);
-        //ApplicationManager.getApplication().getComponent(DataManager.class);
 
         _testTree.setCellRenderer(new DefaultTreeCellRenderer()
         {
@@ -486,7 +487,7 @@ public class RunnerToolWindow
         _discoverButton.setEnabled(true);
 
         CardLayout cl = (CardLayout)(_summaryCards.getLayout());
-        cl.show(_summaryCards, "SummaryCard");
+        cl.show(_summaryCards, "DiscoveryCard");
 
         DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)_testListModel.getRoot();
         ProcessResult processResult = null;
@@ -724,6 +725,9 @@ public class RunnerToolWindow
 
         _testListModel.reload();
         Utils.expandAll(_testTree);
+
+        // TODO singular/plular form of "tests".
+        _discoveryStatus.setText(String.format("%d tests have been found", _testSuites.getTestCount()));
     }
 
     private void processTestResults(Path resultFile, DefaultMutableTreeNode rootNode, TestRunMode runMode)
@@ -848,13 +852,10 @@ public class RunnerToolWindow
         _testSuites.setDisabledTestCount(Integer.parseInt(disabled));
         _testSuites.setFailedTestCount(Integer.parseInt(failed));
 
-        String runSummary = String.format("Run: %d, failed: %d, disabled: %d, time: %d ms",
-                _testSuites.getTestCount(),
-                _testSuites.getFailedTestCount(),
-                _testSuites.getDisabledTestCount(),
-                _testSuites.getExecutionTime());
-
-        _runSummary.setText(runSummary);
+        _summaryPassed.setText(Integer.toString(_testSuites.getTestCount()));
+        _summaryFailed.setText(Integer.toString(_testSuites.getFailedTestCount()));
+        _summaryDisabled.setText(Integer.toString(_testSuites.getDisabledTestCount()));
+        _summaryTotalTime.setText(Integer.toString(_testSuites.getExecutionTime()) + " ms");
     }
 
     // TODO replace with a hashmap
