@@ -54,7 +54,7 @@ public class DemoApp
 
             Path cbpPath = Paths.get(
                     System.getProperty("user.home"),
-                    ".clion10",
+                    ".clion11",
                     "system",
                     "cmake",
                     "generated",

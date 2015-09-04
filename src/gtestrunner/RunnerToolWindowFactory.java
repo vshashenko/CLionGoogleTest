@@ -87,7 +87,7 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
         TargetInfo targetInfo = CLionProjectReader.readSelectedTarget(workspacePath);
 
         ApplicationInfo appInfo = ApplicationInfo.getInstance();
-        String clionFolder = String.format(".clion%s%s", appInfo.getMajorVersion(), appInfo.getMinorVersion());
+        String clionFolder = String.format(".clion%s%s", appInfo.getMajorVersion(), appInfo.getMinorVersion().split("\\.")[0]);
 
         Path cbpPath = Paths.get(
                 System.getProperty("user.home"),
