@@ -44,11 +44,11 @@ public class DemoApp
 
     public static ExecutableInfo readExecutablePath()
     {
-        String clionProjectFolder = "/home/shashenk/Devel/navcloud-cpp-sdk";
         ExecutableInfo exeInfo = null;
 
         try
         {
+            String clionProjectFolder = getTestSampleFolder();
             Path workspacePath = new File(clionProjectFolder + "/.idea/workspace.xml").toPath();
             TargetInfo targetInfo = CLionProjectReader.readSelectedTarget(workspacePath.toString());
 
@@ -58,8 +58,8 @@ public class DemoApp
                     "system",
                     "cmake",
                     "generated",
-                    "e592c795",
-                    "e592c795",
+                    "7c65729b",
+                    "7c65729b",
                     targetInfo.config,
                     targetInfo.projectName + ".cbp");
 
@@ -76,5 +76,22 @@ public class DemoApp
         }
 
         return exeInfo;
+    }
+
+    private static String getTestSampleFolder() throws Exception
+    {
+        String os = System.getProperty("os.name");
+        if (os.equals("Linux"))
+        {
+            return "/home/shashenk/Devel/navcloud-cpp-sdk";
+        }
+        else if (os.startsWith("Windows"))
+        {
+            return "d:\\devel\\GoogleTestSample";
+        }
+        else
+        {
+            throw new Exception("Unsupported OS.");
+        }
     }
 }

@@ -543,9 +543,19 @@ public class RunnerToolWindow
         DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)_testListModel.getRoot();
         resetTestsToNotRun(rootNode, testList);
 
-        //final Path resultFile = Files.createTempFile("gtestrunner", "");
-        _resultFile = new File("/home/shashenk/Devel/gtestrunner_results.txt").toPath();
-        //final Path resultFile = new File("d:\\devel\\gtestrunner_results.txt").toPath();
+        try
+        {
+            _resultFile = Files.createTempFile("gtestrunner", "");
+        }
+        catch (Exception ex)
+        {
+            StringWriter sw = new StringWriter();
+            ex.printStackTrace(new PrintWriter(sw));
+
+            _errorArea.setText("Exception:\n" + sw.toString().replace("\n", "<br>"));
+
+            return;
+        }
 
         String testNamesString = Utils.stringJoin(":", testList);
 
