@@ -100,13 +100,11 @@ public class RunnerToolWindow
             {
                 Component c = super.getTreeCellRendererComponent(tree, value, selected, expanded, isLeaf, row, focused);
 
-                //_renderer.add(c);
-                //_renderer.setBackground(c.getBackground());
-
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
                 if (node.getUserObject() instanceof TestCase)
                 {
                     TestCase testCase = (TestCase) node.getUserObject();
+
                     String timeString = Integer.toString(testCase.getExecutionTime()) + " ms";
 
                     switch (testCase.getStatus())
@@ -629,7 +627,6 @@ public class RunnerToolWindow
         _discoverButton.setEnabled(true);
 
         CardLayout cl = (CardLayout)(_summaryCards.getLayout());
-        cl.show(_summaryCards, "SummaryCard");
 
         DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)_testListModel.getRoot();
         ProcessResult processResult = null;
@@ -645,6 +642,7 @@ public class RunnerToolWindow
 
             processTestResults(_resultFile, rootNode, runMode);
 
+            cl.show(_summaryCards, "SummaryCard");
             onTreeSelectionChanged(new TreeSelectionEvent(_testTree, _testTree.getSelectionPath(), true, null, null));
         }
 //        catch (ExecutionException ex)
@@ -659,6 +657,8 @@ public class RunnerToolWindow
             ex.printStackTrace(new PrintWriter(sw));
 
             _errorArea.setText("Exception:\n" + sw.toString().replace("\n", "<br>"));
+
+            cl.show(_summaryCards, "DiscoveryCard");
         }
         finally
         {
@@ -969,6 +969,8 @@ public class RunnerToolWindow
 
                 stringBuilder.append("<br>");
             }
+
+            stringBuilder.append("<br>");
         }
 
         stringBuilder.append("</html>");
