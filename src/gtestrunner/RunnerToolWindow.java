@@ -41,6 +41,10 @@ public class RunnerToolWindow
     private JLabel _summaryTotalTime;
     private JLabel _discoveryStatus;
 
+    private final String DiscoveryCard = "DiscoveryCard";
+    private final String ProgressCard = "ProgressCard";
+    private final String SummaryCard = "SummaryCard";
+
     private DefaultTreeModel _testListModel;
 
     private ImageIcon _disabledIcon;
@@ -453,7 +457,7 @@ public class RunnerToolWindow
         };
 
         CardLayout cl = (CardLayout)(_summaryCards.getLayout());
-        cl.show(_summaryCards, "ProgressCard");
+        cl.show(_summaryCards, ProgressCard);
 
         _runSelectedButton.setEnabled(false);
         _runAllButton.setEnabled(false);
@@ -482,7 +486,7 @@ public class RunnerToolWindow
         _discoverButton.setEnabled(true);
 
         CardLayout cl = (CardLayout)(_summaryCards.getLayout());
-        cl.show(_summaryCards, "DiscoveryCard");
+        cl.show(_summaryCards, DiscoveryCard);
 
         DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)_testListModel.getRoot();
         ProcessResult processResult = null;
@@ -598,7 +602,7 @@ public class RunnerToolWindow
         };
 
         CardLayout cl = (CardLayout)(_summaryCards.getLayout());
-        cl.show(_summaryCards, "ProgressCard");
+        cl.show(_summaryCards, ProgressCard);
 
         _runSelectedButton.setEnabled(false);
         _runAllButton.setEnabled(false);
@@ -640,10 +644,18 @@ public class RunnerToolWindow
             _consoleOutputWindow.textArea1.append(exitMessage);
             _consoleOutputWindow.textArea1.append("\n");
 
-            processTestResults(_resultFile, rootNode, runMode);
-
-            cl.show(_summaryCards, "SummaryCard");
-            onTreeSelectionChanged(new TreeSelectionEvent(_testTree, _testTree.getSelectionPath(), true, null, null));
+            if (processResult.exitValue == 0)
+            {
+                processTestResults(_resultFile, rootNode, runMode);
+                cl.show(_summaryCards, SummaryCard);
+            }
+            else
+            {
+                cl.show(_summaryCards, DiscoveryCard);
+                _errorArea.setText(
+                        "The gtest process exited with non-zero code or crashed. The results are not available.<br>" +
+                        "Check the Console tab for details.<br>");
+            }
         }
 //        catch (ExecutionException ex)
 //        {
@@ -658,7 +670,7 @@ public class RunnerToolWindow
 
             _errorArea.setText("Exception:\n" + sw.toString().replace("\n", "<br>"));
 
-            cl.show(_summaryCards, "DiscoveryCard");
+            cl.show(_summaryCards, DiscoveryCard);
         }
         finally
         {
