@@ -48,6 +48,7 @@ public class DemoApp
 
         try
         {
+            String clionProjectHash = getTeshSampleHash();
             String clionProjectFolder = getTestSampleFolder();
             Path workspacePath = new File(clionProjectFolder + "/.idea/workspace.xml").toPath();
             TargetInfo targetInfo = CLionProjectReader.readSelectedTarget(workspacePath.toString());
@@ -58,8 +59,8 @@ public class DemoApp
                     "system",
                     "cmake",
                     "generated",
-                    "7c65729b",
-                    "7c65729b",
+                    clionProjectHash,
+                    clionProjectHash,
                     targetInfo.config,
                     targetInfo.projectName + ".cbp");
 
@@ -88,6 +89,23 @@ public class DemoApp
         else if (os.startsWith("Windows"))
         {
             return "d:\\devel\\GoogleTestSample";
+        }
+        else
+        {
+            throw new Exception("Unsupported OS.");
+        }
+    }
+
+    private static String getTeshSampleHash() throws Exception
+    {
+        String os = System.getProperty("os.name");
+        if (os.equals("Linux"))
+        {
+            return "e592c795";
+        }
+        else if (os.startsWith("Windows"))
+        {
+            return "7c65729b";
         }
         else
         {
