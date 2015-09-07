@@ -1,0 +1,42 @@
+- Tree icons for suites
+- Improve icons
+- Handle xml parsing errors.
+- Add progress indication while executing tests (based on prev. execution times?)
+- Handle crashed gtest process. Mark crashed test as failed in the test tree.
+- Problem: dicover tests, run selected test-suite, add another test to the suite, run selected again -- no new tests. So a discover before run is still better.
+- Two run buttons: Run all, Run dropdown (selected, failed, not run)
+- No horizontal scroll bar
+- Go to the test source code on a tree item double click: implement without calling grep, support not only *.cpp.
+- While using grep for the goto operation, use wait cursor.
+- Stand-alone app in release
+- Dropdown list to select gtest target
+- Autodetect target with gtest
+- Debug selected tests (runs with clion debugger command)
+- Kill running gtest process on app/Clion exit.
+- Filter window for the test tree
+- Context menu for test tree items
+- Try how the test window looks in the dark theme
+- Save discovered tests between restart?
+- Add warnings to the result of a test and total number of warnings to the summary.
+  Warnings are not in xml file, only in the console output.
+  An example:
+[ RUN      ] StreamingTest.onStreamingHeartbeatReceivedInTime
+
+GMOCK WARNING:
+Uninteresting mock function call - returning directly.
+    Function call: RecoverableError(@0x7f0e6ccd5270 "Unsupported type of entity received in JSON: {\"pois\":[],\"_timestamp\":\"1970-01-01T00:00:00.000Z\",\"_tag\":\"a85hYGBgzGDKBVIcJgsq3oVaXzyVwZTImMfK8EAk6DxfFgA=\",\"_type\":\"pois\"}")
+Stack trace:
+
+GMOCK WARNING:
+Uninteresting mock function call - returning directly.
+    Function call: RecoverableError(@0x7f0e6ccd5270 "Unsupported type of entity received in JSON: {\"tracks\":[],\"_timestamp\":\"1970-01-01T00:00:00.000Z\",\"_tag\":\"a85hYGBgzGDKBVIcq4689Q3NafqbwZTImMfKkCcWdJ4vCwA=\",\"_type\":\"tracks\"}")
+Stack trace:
+[       OK ] StreamingTest.onStreamingHeartbeatReceivedInTime (1542 ms)
+
+
+
+
+Beyond the runner
+=================
+
+- Command to generate gtest test suite class.
