@@ -1,3 +1,5 @@
+- Handle if the process crashes or is not a gtest exe or not found
+- If the gtest process chashes, write this to the run summary.
 - Tree icons for suites
 - Improve icons
 - Handle xml parsing errors.
