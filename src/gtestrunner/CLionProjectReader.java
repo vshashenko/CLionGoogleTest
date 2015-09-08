@@ -33,11 +33,21 @@ public class CLionProjectReader
         String factoryName = selectedTargetParts[0];
         String targetName = selectedTargetParts[1];
 
-        Element selectedTargetConfig =  (Element)xpath
-                .compile(String.format("configuration[@name='%s' and @factoryName='%s']", targetName, factoryName))
+        // The selected target can be missing some attributes. See <Build All>.
+        // First read attributes from the default target.
+        Element defaultTargetConfig =  (Element)xpath
+                .compile(String.format("configuration[@default='true' and @factoryName='%s']", factoryName))
                 .evaluate(selectedTargetElem, XPathConstants.NODE);
 
         TargetInfo targetInfo = new TargetInfo();
+
+        targetInfo.projectName = defaultTargetConfig.getAttribute("PROJECT_NAME");
+        targetInfo.runName = defaultTargetConfig.getAttribute("TARGET_NAME");
+
+        // Then overwrite with the attributes from the selected target.
+        Element selectedTargetConfig =  (Element)xpath
+                .compile(String.format("configuration[@name='%s' and @factoryName='%s']", targetName, factoryName))
+                .evaluate(selectedTargetElem, XPathConstants.NODE);
 
         targetInfo.projectName = selectedTargetConfig.getAttribute("PROJECT_NAME");
         targetInfo.runName = selectedTargetConfig.getAttribute("RUN_TARGET_NAME");

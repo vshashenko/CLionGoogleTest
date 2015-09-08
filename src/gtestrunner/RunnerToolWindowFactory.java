@@ -1,13 +1,12 @@
 package gtestrunner;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
@@ -25,15 +24,32 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
     private RunnerToolWindow _runnerToolWindow;
     private ConsoleOutputWindow _consoleWindow;
     private Project _project;
+    private VirtualFileListener _virtualFileListener;
 
     public RunnerToolWindowFactory()
     {
+        Notifications.Bus.notify(new Notification("test", "RunnerToolWindowFactory", "a", NotificationType.INFORMATION));
+
+        ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter()
+        {
+            @Override
+            public void projectOpened(Project project)
+            {
+                onProjectOpened(project);
+            }
+
+            @Override
+            public void projectClosed(Project project)
+            {
+                onProjectClosed(project);
+            }
+        });
     }
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow)
     {
-        _project = project;
+        Notifications.Bus.notify(new Notification("test", "createToolWindowContent", "a", NotificationType.INFORMATION));
 
         _runnerToolWindow = new RunnerToolWindow();
         _consoleWindow = new ConsoleOutputWindow();
@@ -54,24 +70,6 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
             }
         });
 
-        updateExecutablePath();
-
-        VirtualFileSystem virtualFileSystem = project.getBaseDir().getFileSystem();
-
-        virtualFileSystem.addVirtualFileListener(new VirtualFileAdapter()
-        {
-            @Override
-            public void contentsChanged(@NotNull VirtualFileEvent event)
-            {
-                onFileContentsChanged(event);
-            }
-        });
-
-        // /home/shashenk/.clion10/system/cmake/generated/e592c795/e592c795/Debug/GoogleTestSample.cbp
-        // C:\Users\v.shashenko\.clion10\system\cmake\generated\7c65729b\7c65729b\Debug/GoogleTestSample.cbp
-
-        //_runnerToolWindow.readExecutablePath(cbpPath);
-
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
 
         Content testsContent = contentFactory.createContent(_runnerToolWindow.getRootView(), "Tests", false);
@@ -79,6 +77,37 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
 
         Content consoleContent = contentFactory.createContent(_consoleWindow.root, "Console", false);
         toolWindow.getContentManager().addContent(consoleContent);
+    }
+
+    private void onProjectOpened(Project project)
+    {
+        Notifications.Bus.notify(new Notification("test", "projectOpened " + project.getName(), "a", NotificationType.INFORMATION));
+
+        _project = project;
+
+        updateExecutablePath();
+
+        _virtualFileListener = new VirtualFileAdapter()
+        {
+            @Override
+            public void contentsChanged(@NotNull VirtualFileEvent event)
+            {
+                onFileContentsChanged(event);
+            }
+        };
+
+        VirtualFileSystem virtualFileSystem = project.getBaseDir().getFileSystem();
+        virtualFileSystem.addVirtualFileListener(_virtualFileListener);
+    }
+
+    private void onProjectClosed(Project project)
+    {
+        Notifications.Bus.notify(new Notification("test", "projectClosed ", "a", NotificationType.INFORMATION));
+
+        VirtualFileSystem virtualFileSystem = project.getBaseDir().getFileSystem();
+        virtualFileSystem.removeVirtualFileListener(_virtualFileListener);
+
+        _project = null;
     }
 
     private static ExecutableInfo readExecutablePath(@NotNull Project project) throws Exception
@@ -111,6 +140,11 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
 
     private void onFileContentsChanged(VirtualFileEvent event)
     {
+        if (!_project.isOpen())
+        {
+            return;
+        }
+
         String workspacePath = _project.getWorkspaceFile().getPath();
 
         if (event.getFile().getPath().equals(workspacePath))
