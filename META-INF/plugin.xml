@@ -34,10 +34,9 @@
   </application-components>
 
   <project-components>
-      <!--<component>-->
-          <!--<interface-class>gtestrunner.RunnerView</interface-class>-->
-          <!--<implementation-class>gtestrunner.RunnerView</implementation-class>-->
-      <!--</component>-->
+      <component>
+          <implementation-class>gtestrunner.GoogleTestRunner</implementation-class>
+      </component>
   </project-components>
 
   <actions>
