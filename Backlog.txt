@@ -1,5 +1,13 @@
 - Handle if the process crashes or is not a gtest exe or not found
 - If the gtest process chashes, write this to the run summary.
+- Bug: empty name of .cbp file when Build all is selected
+- Bug: CLionProjectReader.readSelectedTarget throws NPE when open a new project without .idea folder.
+- Clean up references when the project is closed.
+- Show progress bar only after 500ms and/or not less than 1 ms.
+- Intellij notifications about test run: tests failed, test succeeded.
+- What if test code from a gtest binary writes something to stdout.
+- Problem: printf's in the test code doesn't appear in the console tab.
+- An icon for the running state of a test.
 - Tree icons for suites
 - Improve icons
 - Handle xml parsing errors.
