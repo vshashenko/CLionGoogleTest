@@ -644,18 +644,8 @@ public class RunnerToolWindow
             _consoleOutputWindow.textArea1.append(exitMessage);
             _consoleOutputWindow.textArea1.append("\n");
 
-//            if (processResult.exitValue == 0)
-            {
-                processTestResults(_resultFile, rootNode, runMode);
-                cl.show(_summaryCards, SummaryCard);
-            }
-//            else
-//            {
-//                cl.show(_summaryCards, DiscoveryCard);
-//                _errorArea.setText(
-//                        "The gtest process exited with non-zero code or crashed. The results are not available.<br>" +
-//                        "Check the Console tab for details.<br>");
-//            }
+            processTestResults(_resultFile, rootNode, runMode);
+            cl.show(_summaryCards, SummaryCard);
         }
 //        catch (ExecutionException ex)
 //        {
