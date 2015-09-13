@@ -10,7 +10,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import java.io.File;
-import java.nio.file.Path;
 
 public class CLionProjectReader
 {
@@ -39,7 +38,7 @@ public class CLionProjectReader
 
         TargetInfo targetInfo = new TargetInfo();
 
-        targetInfo.projectName = selectedTargetConfig.getAttribute("PROJECT_NAME");
+        targetInfo.projectName = selectedTargetConfig.getAttribute("RUN_TARGET_PROJECT_NAME");
         targetInfo.runName = selectedTargetConfig.getAttribute("RUN_TARGET_NAME");
         targetInfo.params = selectedTargetConfig.getAttribute("PROGRAM_PARAMS");
         targetInfo.config = selectedTargetConfig.getAttribute("CONFIG_NAME");

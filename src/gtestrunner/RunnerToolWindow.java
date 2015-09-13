@@ -300,6 +300,11 @@ public class RunnerToolWindow
         Collections.addAll(_additionalArguments, params.split(" "));
     }
 
+    public void setError(String message)
+    {
+        _errorArea.setText(message.replace("\n", "<br>"));
+    }
+
     public void setExternalCommandExecutor(IExternalCommandExecutor externalCommandExecutor)
     {
         _externalCommandExecutor = externalCommandExecutor;

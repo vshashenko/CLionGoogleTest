@@ -2,7 +2,7 @@
   <id>com.shashenko.gtestrunner</id>
   <name>Google Test Runner</name>
   <version>1.0</version>
-  <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
+  <vendor email="v.shashenko@gmail.com" url="https://github.com/vshashenko/CLionGoogleTest">Project on GitHub</vendor>
 
   <description><![CDATA[
       Run gtest tests from CLion.<br>
@@ -34,10 +34,9 @@
   </application-components>
 
   <project-components>
-      <!--<component>-->
-          <!--<interface-class>gtestrunner.RunnerView</interface-class>-->
-          <!--<implementation-class>gtestrunner.RunnerView</implementation-class>-->
-      <!--</component>-->
+      <component>
+          <implementation-class>gtestrunner.GoogleTestRunner</implementation-class>
+      </component>
   </project-components>
 
   <actions>
