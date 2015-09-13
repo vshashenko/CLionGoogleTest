@@ -69,13 +69,16 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
         {
             ExecutableInfo exeInfo = project.getComponent(GoogleTestRunner.class).get_exeInfo();
             _runnerToolWindow.setExecutablePath(exeInfo.command, exeInfo.arguments);
+            _runnerToolWindow.setError("");
         }
         catch (Exception ex)
         {
+            _runnerToolWindow.setExecutablePath("", "");
+
             StringWriter sw = new StringWriter();
             ex.printStackTrace(new PrintWriter(sw));
 
-            JOptionPane.showMessageDialog(null, sw.toString());
+            _runnerToolWindow.setError(sw.toString());
         }
     }
 }

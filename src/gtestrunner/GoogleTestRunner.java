@@ -104,6 +104,9 @@ public class GoogleTestRunner implements ProjectComponent
 
     private void updateExeInfo()
     {
+        _exeInfo = null;
+        _exeInfoError = null;
+
         try
         {
             _exeInfo = readExecutablePath(_project);
@@ -123,6 +126,11 @@ public class GoogleTestRunner implements ProjectComponent
     {
         String workspacePath = project.getWorkspaceFile().getPath();
         TargetInfo targetInfo = CLionProjectReader.readSelectedTarget(workspacePath);
+
+        if (targetInfo.projectName.isEmpty())
+        {
+            throw new Exception("Project does not exist. Probably run executable is not selected.");
+        }
 
         ApplicationInfo appInfo = ApplicationInfo.getInstance();
         String clionFolder = String.format(".clion%s%s", appInfo.getMajorVersion(), appInfo.getMinorVersion().split("\\.")[0]);

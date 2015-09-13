@@ -4,6 +4,9 @@ import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -125,5 +128,21 @@ public class Utils
         processResult.outputLines = outputLines;
 
         return processResult;
+    }
+
+    public static void log(String message)
+    {
+        if (message == null)
+        {
+            message = "<null>";
+        }
+
+        try
+        {
+            Files.write(Paths.get("d:\\devel\\gtest_runner_log.txt"), (message + "\r\n").getBytes(), StandardOpenOption.APPEND);
+        }
+        catch (IOException e)
+        {
+        }
     }
 }
