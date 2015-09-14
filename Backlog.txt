@@ -1,3 +1,4 @@
+- Remove word wrap from the error pane.
 - Handle if the process crashes or is not a gtest exe or not found
 - If the gtest process chashes, write this to the run summary.
 - Bug: CLionProjectReader.readSelectedTarget throws NPE when open a new project without .idea folder.
