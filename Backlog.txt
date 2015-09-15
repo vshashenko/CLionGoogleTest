@@ -1,20 +1,20 @@
 - Remove word wrap from the error pane.
 - Handle if the process crashes or is not a gtest exe or not found
-- If the gtest process chashes, write this to the run summary.
+- If the gtest process chashes, write this to the run summary. Crashed process returns 139 on Linux, 0xC0000005 (signed int) on Windows.
 - Bug: CLionProjectReader.readSelectedTarget throws NPE when open a new project without .idea folder.
-- Show progress bar only after 500ms and/or not less than 1 ms.
 - Intellij notifications about test run: tests failed, test succeeded.
-- What if test code from a gtest binary writes something to stdout.
-- Problem: printf's in the test code doesn't appear in the console tab.
+- Problem: printf's in the test code doesn't appear in the console tab (ok on linux)
 - An icon for the running state of a test.
+- Show xml report content somewhere for debugging purpose.
 - Tree icons for suites
 - Improve icons
 - Handle xml parsing errors.
 - Add progress indication while executing tests (based on prev. execution times?)
-- Handle crashed gtest process. Mark crashed test as failed in the test tree.
+- Mark crashed test as failed in the test tree. Possible only if parse stdout. The xml report is empty if the process crashed.
 - Problem: dicover tests, run selected test-suite, add another test to the suite, run selected again -- no new tests. So a discover before run is still better.
 - Two run buttons: Run all, Run dropdown (selected, failed, not run)
 - No horizontal scroll bar
+- Show progress bar only after 500ms and/or not less than 1 ms.
 - Go to the test source code on a tree item double click: implement without calling grep, support not only *.cpp.
 - While using grep for the goto operation, use wait cursor.
 - Stand-alone app in release
@@ -26,7 +26,7 @@
 - Context menu for test tree items
 - Try how the test window looks in the dark theme
 - Save discovered tests between restart?
-- Add warnings to the result of a test and total number of warnings to the summary.
+- Add warnings to the result of a test and total number of warnings to the summary. Possible only if parse stdout.
   Warnings are not in xml file, only in the console output.
   An example:
 [ RUN      ] StreamingTest.onStreamingHeartbeatReceivedInTime
@@ -48,4 +48,4 @@ Stack trace:
 Beyond the runner
 =================
 
-- Command to generate gtest test suite class.
+- Command to generate gtest test suite class. Seems JetBrains will do it.

@@ -548,7 +548,7 @@ public class RunnerToolWindow
 
         try
         {
-            _resultFile = Files.createTempFile("gtestrunner", "");
+            _resultFile = Files.createTempFile("gtestrunner_", ".xml");
         }
         catch (Exception ex)
         {
