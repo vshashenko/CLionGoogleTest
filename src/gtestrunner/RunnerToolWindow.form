@@ -54,6 +54,7 @@
               <component id="32904" class="javax.swing.JEditorPane" binding="_errorArea">
                 <constraints/>
                 <properties>
+                  <contentType value="text/html"/>
                   <editable value="false"/>
                   <enabled value="true"/>
                 </properties>
@@ -149,7 +150,7 @@
             </constraints>
             <properties>
               <icon value="gtestrunner/images/NotRun.png"/>
-              <text value="Press Refresh button to discover tests"/>
+              <text value="Test discovery status here"/>
             </properties>
           </component>
           <component id="3927" class="javax.swing.JProgressBar" binding="_progressBar">

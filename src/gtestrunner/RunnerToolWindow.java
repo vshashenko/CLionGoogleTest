@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
 public class RunnerToolWindow
@@ -44,6 +45,7 @@ public class RunnerToolWindow
     private final String DiscoveryCard = "DiscoveryCard";
     private final String ProgressCard = "ProgressCard";
     private final String SummaryCard = "SummaryCard";
+    private final String DiscoveryHint = "Press Refresh button to discover tests";
 
     private DefaultTreeModel _testListModel;
 
@@ -73,6 +75,8 @@ public class RunnerToolWindow
         _testTree.setModel(_testListModel);
 
         _stopButton.setEnabled(false);
+
+        _discoveryStatus.setText(DiscoveryHint);
 
         _disabledIcon = new ImageIcon(getClass().getResource("images/Disabled.png"));
         _notRunIcon = new ImageIcon(getClass().getResource("images/NotRun.png"));
@@ -217,8 +221,6 @@ public class RunnerToolWindow
             }
         });
 
-        _errorArea.setContentType("text/html");
-
         _errorArea.addHyperlinkListener(new HyperlinkAdapter()
         {
             @Override
@@ -253,7 +255,7 @@ public class RunnerToolWindow
                 StringWriter sw = new StringWriter();
                 ex.printStackTrace(new PrintWriter(sw));
 
-                _errorArea.setText(sw.toString().replace("\n", "<br>"));
+                _errorArea.setText(formatToHtml(sw.toString()));
             }
         }
     }
@@ -278,7 +280,7 @@ public class RunnerToolWindow
             StringWriter sw = new StringWriter();
             ex.printStackTrace(new PrintWriter(sw));
 
-            _errorArea.setText(sw.toString().replace("\n", "<br>"));
+            _errorArea.setText(formatToHtml(sw.toString()));
         }
     }
 
@@ -302,7 +304,7 @@ public class RunnerToolWindow
 
     public void setError(String message)
     {
-        _errorArea.setText(message.replace("\n", "<br>"));
+        _errorArea.setText(formatToHtml(message));
     }
 
     public void setExternalCommandExecutor(IExternalCommandExecutor externalCommandExecutor)
@@ -507,6 +509,9 @@ public class RunnerToolWindow
 
             processDiscoveryResults(processResult.outputLines, rootNode);
 
+            // TODO singular/plular form of "tests".
+            _discoveryStatus.setText(String.format("%d tests have been found", _testSuites.getTestCount()));
+
             Utils.setExpansionStates(_testTree, testTreeState.expansionState);
             _testTree.setSelectionRows(testTreeState.selectionRows);
 
@@ -519,25 +524,34 @@ public class RunnerToolWindow
                 }
             });
         }
-//        catch (ExecutionException ex)
-//        {
-//        }
-//        catch (InterruptedException ex)
-//        {
-//        }
+        catch (ExecutionException ex)
+        {
+            Throwable causeException = ex.getCause();
+
+            _testSuites = null;
+
+            _errorArea.setText(formatToHtml(causeException.getMessage()));
+            _discoveryStatus.setText(DiscoveryHint);
+        }
         catch (DiscoveryParsingException ex)
         {
+            _testSuites = null;
+
             //TODO write message about failed discovery in the test tree window instead?
             _errorArea.setText(
                     "The output from the test executable doesn't appear to be a list of tests.<br>" +
                     "Please check Console tab for details.");
+            _discoveryStatus.setText(DiscoveryHint);
         }
         catch (Exception ex)
         {
+            _testSuites = null;
+
             StringWriter sw = new StringWriter();
             ex.printStackTrace(new PrintWriter(sw));
 
-            _errorArea.setText("Exception:\n" + sw.toString().replace("\n", "<br>"));
+            _errorArea.setText(formatToHtml("Exception:\n" + sw.toString()));
+            _discoveryStatus.setText(DiscoveryHint);
         }
     }
 
@@ -555,7 +569,7 @@ public class RunnerToolWindow
             StringWriter sw = new StringWriter();
             ex.printStackTrace(new PrintWriter(sw));
 
-            _errorArea.setText("Exception:\n" + sw.toString().replace("\n", "<br>"));
+            _errorArea.setText(formatToHtml("Exception:\n" + sw.toString()));
 
             return;
         }
@@ -652,18 +666,40 @@ public class RunnerToolWindow
             processTestResults(_resultFile, rootNode, runMode);
             cl.show(_summaryCards, SummaryCard);
         }
-//        catch (ExecutionException ex)
-//        {
-//        }
-//        catch (InterruptedException ex)
-//        {
-//        }
+        catch (ExecutionException ex)
+        {
+            Throwable causeException = ex.getCause();
+
+             _errorArea.setText(formatToHtml(causeException.getMessage()));
+
+            if (_testSuites != null)
+            {
+                // TODO singular/plular form of "tests".
+                _discoveryStatus.setText(String.format("%d tests have been found", _testSuites.getTestCount()));
+            }
+            else
+            {
+                _discoveryStatus.setText(DiscoveryHint);
+            }
+
+            cl.show(_summaryCards, DiscoveryCard);
+        }
         catch (Exception ex)
         {
             StringWriter sw = new StringWriter();
             ex.printStackTrace(new PrintWriter(sw));
 
-            _errorArea.setText("Exception:\n" + sw.toString().replace("\n", "<br>"));
+            _errorArea.setText(formatToHtml("Exception:\n" + sw.toString()));
+
+            if (_testSuites != null)
+            {
+                // TODO singular/plular form of "tests".
+                _discoveryStatus.setText(String.format("%d tests have been found", _testSuites.getTestCount()));
+            }
+            else
+            {
+                _discoveryStatus.setText(DiscoveryHint);
+            }
 
             cl.show(_summaryCards, DiscoveryCard);
         }
@@ -754,9 +790,6 @@ public class RunnerToolWindow
 
         _testListModel.reload();
         Utils.expandAll(_testTree);
-
-        // TODO singular/plular form of "tests".
-        _discoveryStatus.setText(String.format("%d tests have been found", _testSuites.getTestCount()));
     }
 
     private void processTestResults(Path resultFile, DefaultMutableTreeNode rootNode, TestRunMode runMode)
@@ -983,5 +1016,10 @@ public class RunnerToolWindow
         stringBuilder.append("</html>");
 
         return stringBuilder.toString();
+    }
+
+    private static String formatToHtml(String message)
+    {
+        return message.replace("\n", "<br>");
     }
 }
