@@ -26,6 +26,7 @@
 - Try how the test window looks in the dark theme
 - Intellij notifications about test run: tests failed, test succeeded.
 - Save discovered tests between restart?
+- Add options for shuffled and repeated run (gtest has command line options for that).
 
 
 This is possible only after parsing the std output:
