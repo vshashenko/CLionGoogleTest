@@ -553,7 +553,10 @@ public class RunnerToolWindow
 
         try
         {
+            // We need only a temporary file name, not an empty file being created.
+            // So we remove the file right after it's been created.
             _resultFile = Files.createTempFile("gtestrunner_", ".xml");
+            Files.deleteIfExists(_resultFile);
         }
         catch (Exception ex)
         {

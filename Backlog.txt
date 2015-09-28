@@ -1,10 +1,7 @@
 - Bug: CLionProjectReader.readSelectedTarget throws NPE when open a new project without .idea folder.
 - Bug: Discover tests (N tests found), run X selected tests, change exe name to wrong, run all -- the message will be "X tests found" (should be still N).
-- Bug: Console tab allows editing.
-- Bug: An empty temp file for the report is created instead of just a file name.
 
 - Remove word wrap from the error pane.
-- Format nice message if the process crashes during test run or is not a gtest exe (xml report not found).
 - If the gtest process crashes, write this to the run summary. Crashed process returns 139 on Linux, 0xC0000005 (signed int) on Windows.
 - Problem: printf's in the test code doesn't appear in the console tab (ok on linux)
 - An icon for the running state of a test.
