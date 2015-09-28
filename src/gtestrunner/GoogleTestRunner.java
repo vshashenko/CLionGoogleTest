@@ -129,7 +129,7 @@ public class GoogleTestRunner implements ProjectComponent
 
         if (targetInfo.projectName.isEmpty())
         {
-            throw new Exception("Project does not exist. Probably run executable is not selected.");
+            throw new NoProjectException();
         }
 
         ApplicationInfo appInfo = ApplicationInfo.getInstance();
@@ -143,14 +143,14 @@ public class GoogleTestRunner implements ProjectComponent
                 "generated",
                 project.getLocationHash(),
                 project.getLocationHash(),
-                targetInfo.config,
+                targetInfo.configName,
                 targetInfo.projectName + ".cbp");
 
-        String exePath = CLionProjectReader.readExecutablePath(cbpPath.toString(), targetInfo.runName);
+        String exePath = CLionProjectReader.readExecutablePath(cbpPath.toString(), targetInfo.targetName);
 
         ExecutableInfo exeInfo = new ExecutableInfo();
         exeInfo.command = exePath;
-        exeInfo.arguments = targetInfo.params;
+        exeInfo.arguments = targetInfo.programParams;
 
         return exeInfo;
     }

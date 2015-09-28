@@ -252,10 +252,7 @@ public class RunnerToolWindow
             }
             catch (Exception ex)
             {
-                StringWriter sw = new StringWriter();
-                ex.printStackTrace(new PrintWriter(sw));
-
-                _errorArea.setText(formatToHtml(sw.toString()));
+                _errorArea.setText(formatToHtml(Utils.toString(ex)));
             }
         }
     }
@@ -277,10 +274,7 @@ public class RunnerToolWindow
         }
         catch (Exception ex)
         {
-            StringWriter sw = new StringWriter();
-            ex.printStackTrace(new PrintWriter(sw));
-
-            _errorArea.setText(formatToHtml(sw.toString()));
+            _errorArea.setText(formatToHtml(Utils.toString(ex)));
         }
     }
 
@@ -547,10 +541,7 @@ public class RunnerToolWindow
         {
             _testSuites = null;
 
-            StringWriter sw = new StringWriter();
-            ex.printStackTrace(new PrintWriter(sw));
-
-            _errorArea.setText(formatToHtml("Exception:\n" + sw.toString()));
+            _errorArea.setText(formatToHtml("Exception:\n" + Utils.toString(ex)));
             _discoveryStatus.setText(DiscoveryHint);
         }
     }
@@ -566,10 +557,7 @@ public class RunnerToolWindow
         }
         catch (Exception ex)
         {
-            StringWriter sw = new StringWriter();
-            ex.printStackTrace(new PrintWriter(sw));
-
-            _errorArea.setText(formatToHtml("Exception:\n" + sw.toString()));
+            _errorArea.setText(formatToHtml("Exception:\n" + Utils.toString(ex)));
 
             return;
         }
@@ -666,30 +654,27 @@ public class RunnerToolWindow
             processTestResults(_resultFile, rootNode, runMode);
             cl.show(_summaryCards, SummaryCard);
         }
-        catch (ExecutionException ex)
+        catch (Exception ex)
         {
-            Throwable causeException = ex.getCause();
+            String errorMessage = "";
 
-             _errorArea.setText(formatToHtml(causeException.getMessage()));
-
-            if (_testSuites != null)
+            if (ex instanceof ExecutionException)
             {
-                // TODO singular/plular form of "tests".
-                _discoveryStatus.setText(String.format("%d tests have been found", _testSuites.getTestCount()));
+                Throwable causeException = ex.getCause();
+                errorMessage = formatToHtml(causeException.getMessage());
+            }
+            else if (ex instanceof NoResultFileException)
+            {
+                errorMessage =
+                        "The report file is not found. " +
+                        "Probably the test process has crashed or is not a valid test executable.";
             }
             else
             {
-                _discoveryStatus.setText(DiscoveryHint);
+                errorMessage = formatToHtml("Exception:\n" + Utils.toString(ex));
             }
 
-            cl.show(_summaryCards, DiscoveryCard);
-        }
-        catch (Exception ex)
-        {
-            StringWriter sw = new StringWriter();
-            ex.printStackTrace(new PrintWriter(sw));
-
-            _errorArea.setText(formatToHtml("Exception:\n" + sw.toString()));
+            _errorArea.setText(errorMessage);
 
             if (_testSuites != null)
             {
@@ -797,7 +782,7 @@ public class RunnerToolWindow
     {
         if (!Files.exists(resultFile))
         {
-            throw new Exception("Result file does not exist.");
+            throw new NoResultFileException();
         }
 
         if (runMode == TestRunMode.All)

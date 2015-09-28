@@ -39,9 +39,9 @@ public class CLionProjectReader
         TargetInfo targetInfo = new TargetInfo();
 
         targetInfo.projectName = selectedTargetConfig.getAttribute("RUN_TARGET_PROJECT_NAME");
-        targetInfo.runName = selectedTargetConfig.getAttribute("RUN_TARGET_NAME");
-        targetInfo.params = selectedTargetConfig.getAttribute("PROGRAM_PARAMS");
-        targetInfo.config = selectedTargetConfig.getAttribute("CONFIG_NAME");
+        targetInfo.targetName = selectedTargetConfig.getAttribute("RUN_TARGET_NAME");
+        targetInfo.programParams = selectedTargetConfig.getAttribute("PROGRAM_PARAMS");
+        targetInfo.configName = selectedTargetConfig.getAttribute("CONFIG_NAME");
 
         return targetInfo;
     }

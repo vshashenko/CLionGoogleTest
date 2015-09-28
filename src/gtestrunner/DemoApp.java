@@ -3,8 +3,6 @@ package gtestrunner;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -61,19 +59,16 @@ public class DemoApp
                     "generated",
                     clionProjectHash,
                     clionProjectHash,
-                    targetInfo.config,
+                    targetInfo.configName,
                     targetInfo.projectName + ".cbp");
 
             exeInfo = new ExecutableInfo();
-            exeInfo.command = CLionProjectReader.readExecutablePath(cbpPath.toString(), targetInfo.runName);
-            exeInfo.arguments = targetInfo.params;
+            exeInfo.command = CLionProjectReader.readExecutablePath(cbpPath.toString(), targetInfo.targetName);
+            exeInfo.arguments = targetInfo.programParams;
         }
         catch (Exception ex)
         {
-            StringWriter sw = new StringWriter();
-            ex.printStackTrace(new PrintWriter(sw));
-
-            JOptionPane.showMessageDialog(null, sw.toString());
+            JOptionPane.showMessageDialog(null, Utils.toString(ex));
         }
 
         return exeInfo;

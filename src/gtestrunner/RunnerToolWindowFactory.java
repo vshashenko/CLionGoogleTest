@@ -7,10 +7,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
 {
     private RunnerToolWindow _runnerToolWindow;
@@ -65,20 +61,22 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
 
     private void updateExecutablePath(Project project)
     {
+        _runnerToolWindow.setExecutablePath("", "");
+        _runnerToolWindow.setError("");
+
         try
         {
             ExecutableInfo exeInfo = project.getComponent(GoogleTestRunner.class).get_exeInfo();
+
             _runnerToolWindow.setExecutablePath(exeInfo.command, exeInfo.arguments);
-            _runnerToolWindow.setError("");
+        }
+        catch (NoProjectException ex)
+        {
+            _runnerToolWindow.setError("Project does not exist. Probably run executable is not selected.");
         }
         catch (Exception ex)
         {
-            _runnerToolWindow.setExecutablePath("", "");
-
-            StringWriter sw = new StringWriter();
-            ex.printStackTrace(new PrintWriter(sw));
-
-            _runnerToolWindow.setError(sw.toString());
+            _runnerToolWindow.setError(Utils.toString(ex));
         }
     }
 }

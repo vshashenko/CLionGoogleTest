@@ -1,9 +1,7 @@
 package gtestrunner;
 
 import javax.swing.*;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -128,6 +126,14 @@ public class Utils
         processResult.outputLines = outputLines;
 
         return processResult;
+    }
+
+    public static String toString(Exception ex)
+    {
+        StringWriter sw = new StringWriter();
+        ex.printStackTrace(new PrintWriter(sw));
+
+        return sw.toString();
     }
 
     public static void log(String message)
