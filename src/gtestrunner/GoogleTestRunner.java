@@ -133,7 +133,7 @@ public class GoogleTestRunner implements ProjectComponent
         }
 
         ApplicationInfo appInfo = ApplicationInfo.getInstance();
-        String clionFolder = String.format(".clion%s%s", appInfo.getMajorVersion(), appInfo.getMinorVersion().split("\\.")[0]);
+        String clionFolder = String.format(".CLion%s%s", appInfo.getMajorVersion(), appInfo.getMinorVersion().split("\\.")[0]);
 
         Path cbpPath = Paths.get(
                 System.getProperty("user.home"),

@@ -1,5 +1,6 @@
 - Bug: CLionProjectReader.readSelectedTarget throws NPE when open a new project without .idea folder.
 - Bug: run selected tests, change exe name to wrong, run all tests -- the status of the tests should be reset to "not run".
+- Bug: CLion prior to 1.2 is not supported because of the ".clionXX" name in the clion data path.
 
 - Remove word wrap from the error pane.
 - If the gtest process crashes, write this to the run summary. Crashed process returns 139 on Linux, 0xC0000005 (signed int) on Windows.
