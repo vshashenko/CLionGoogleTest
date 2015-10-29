@@ -893,9 +893,10 @@ public class RunnerToolWindow
         {
             _testListModel.reload();
             Utils.expandAll(_testTree);
+
+            _testSuites = new TestSuites(Integer.parseInt(testCount), "", 0);
         }
 
-        _testSuites = new TestSuites(Integer.parseInt(testCount), "", 0);
         _testSuites.setExecutionTime((int) (Double.parseDouble(time) * 1000));
         _testSuites.setStatus(failures.equals("0") ? TestCaseStatus.Success : TestCaseStatus.Failed);
         _testSuites.setTimestamp(timestamp);

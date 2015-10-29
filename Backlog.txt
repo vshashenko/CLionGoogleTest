@@ -1,5 +1,5 @@
 - Bug: CLionProjectReader.readSelectedTarget throws NPE when open a new project without .idea folder.
-- Bug: Discover tests (N tests found), run X selected tests, change exe name to wrong, run all -- the message will be "X tests found" (should be still N).
+- Bug: run selected tests, change exe name to wrong, run all tests -- the status of the tests should be reset to "not run".
 
 - Remove word wrap from the error pane.
 - If the gtest process crashes, write this to the run summary. Crashed process returns 139 on Linux, 0xC0000005 (signed int) on Windows.
