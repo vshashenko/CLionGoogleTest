@@ -4,6 +4,7 @@
 - Bug: CLion prior to 1.2 is not supported because of the ".clionXX" name in the clion data path.
 - Bug: Run status shows total number of tests as succeeded ones.
 - Bug: Test details get reset when save button is pressed. TODO Reset only when exe path changes.
+- Bug: Item names in the tree are truncated in the middle of the tree width.
 
 - Remove word wrap from the error pane.
 - If the gtest process crashes, write this to the run summary. Crashed process returns 139 on Linux, 0xC0000005 (signed int) on Windows.
