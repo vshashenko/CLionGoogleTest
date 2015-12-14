@@ -7,6 +7,9 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
 {
     private RunnerToolWindow _runnerToolWindow;
@@ -61,14 +64,15 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
 
     private void updateExecutablePath(Project project)
     {
-        _runnerToolWindow.setExecutablePath("", "");
+        _runnerToolWindow.setAvailableTargets(new ArrayList<TargetInfo>());
         _runnerToolWindow.setError("");
 
         try
         {
-            ExecutableInfo exeInfo = project.getComponent(GoogleTestRunner.class).get_exeInfo();
+            List<TargetInfo> availableTargets = project.getComponent(GoogleTestRunner.class).get_availableTargets();
 
-            _runnerToolWindow.setExecutablePath(exeInfo.command, exeInfo.arguments);
+            _runnerToolWindow.setAvailableTargets(availableTargets);
+            //_runnerToolWindow.setCurrentTarget(null);
         }
         catch (NoProjectException ex)
         {

@@ -13,6 +13,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.lang.annotation.Target;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -32,7 +33,7 @@ public class RunnerToolWindow
     private JButton _expandAllButton;
     private JButton _collapseAllButton;
     private JSplitPane _splitPane;
-    private JTextField _executablePathArea;
+    private JComboBox _availableTargets;
     private JProgressBar _progressBar;
     private JPanel _summaryCards;
     private JScrollPane _testTreeScrollPane;
@@ -232,6 +233,23 @@ public class RunnerToolWindow
                 }
             }
         });
+
+        _availableTargets.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                JComboBox cb = (JComboBox)e.getSource();
+                TargetInfo selectedItem = (TargetInfo)cb.getSelectedItem();
+
+                _additionalArguments.clear();
+
+                if (selectedItem != null)
+                {
+                    Collections.addAll(_additionalArguments, selectedItem.programParams.split(" "));
+                }
+            }
+        });
     }
 
     private void onTreeItemActivated(TreePath selPath)
@@ -288,12 +306,18 @@ public class RunnerToolWindow
         _consoleOutputWindow = consoleOutputWindow;
     }
 
-    public void setExecutablePath(String s, String params)
+    public void setAvailableTargets(List<TargetInfo> availableTargets)
     {
-        _executablePathArea.setText(s);
+        TargetInfo[] availableTargetsArray = new TargetInfo[availableTargets.size()];
+        availableTargets.toArray(availableTargetsArray);
+        DefaultComboBoxModel<TargetInfo> uiAvailableTargets = new DefaultComboBoxModel<>(availableTargetsArray);
 
-        _additionalArguments.clear();
-        Collections.addAll(_additionalArguments, params.split(" "));
+        _availableTargets.setModel(uiAvailableTargets);
+    }
+
+    public void setCurrentTarget(TargetInfo currentTarget)
+    {
+        _availableTargets.setSelectedItem(currentTarget);
     }
 
     public void setError(String message)
@@ -405,6 +429,12 @@ public class RunnerToolWindow
 
     private void discoverTests()
     {
+        TargetInfo selectedTarget = (TargetInfo)_availableTargets.getSelectedItem();
+        if (selectedTarget == null)
+        {
+            return;
+        }
+
         // If a discovery operation changes number of suites, then the restore will not work correct.
         final TestTreeState testTreeState = new TestTreeState();
         testTreeState.expansionState = Utils.getExpansionStates(_testTree);
@@ -419,7 +449,7 @@ public class RunnerToolWindow
 
         final List<String> args = new ArrayList<>();
 
-        args.add(_executablePathArea.getText());
+        args.add(selectedTarget.executableInfo.command);
         args.add("--gtest_list_tests");
         args.addAll(_additionalArguments);
 
@@ -548,6 +578,12 @@ public class RunnerToolWindow
 
     private void runTests(List<String> testList, final TestRunMode runMode)
     {
+        TargetInfo selectedTarget = (TargetInfo)_availableTargets.getSelectedItem();
+        if (selectedTarget == null)
+        {
+            return;
+        }
+
         DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)_testListModel.getRoot();
         resetTestsToNotRun(rootNode, testList);
 
@@ -569,7 +605,7 @@ public class RunnerToolWindow
 
         final List<String> args = new ArrayList<>();
 
-        args.add(_executablePathArea.getText());
+        args.add(selectedTarget.executableInfo.command);
         args.add("--gtest_filter=" + testNamesString);
         args.add("--gtest_output=xml:" + _resultFile.toString()); // whitespaces in filename
         args.addAll(_additionalArguments);
@@ -704,35 +740,6 @@ public class RunnerToolWindow
                 }
             }
         }
-    }
-
-    private List<String> getTestList() throws IOException, InterruptedException
-    {
-        List<String> args = new ArrayList<>();
-
-        args.add(_executablePathArea.getText());
-        args.add("--gtest_list_tests");
-        args.addAll(_additionalArguments);
-
-        ProcessResult processResult = Utils.executeProcess(null, args);
-
-        return processResult.outputLines;
-    }
-
-    private List<String> runTests(List<String> testNames, Path resultFile) throws IOException, InterruptedException
-    {
-        String testNamesString = Utils.stringJoin(":", testNames);
-
-        List<String> args = new ArrayList<>();
-
-        args.add(_executablePathArea.getText());
-        args.add("--gtest_filter=" + testNamesString);
-        args.add("--gtest_output=xml:" + resultFile.toString()); // whitespaces in filename
-        args.addAll(_additionalArguments);
-
-        ProcessResult processResult = Utils.executeProcess(null, args);
-
-        return processResult.outputLines;
     }
 
     private void processDiscoveryResults(List<String> outputLines, DefaultMutableTreeNode rootNode)

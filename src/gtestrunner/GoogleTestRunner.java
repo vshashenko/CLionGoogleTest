@@ -9,12 +9,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GoogleTestRunner implements ProjectComponent
 {
     private Project _project;
-    private ExecutableInfo _exeInfo;
-    private Exception _exeInfoError;
+    private List<TargetInfo> _availableTargets = new ArrayList<>();
+    private TargetInfo _selectedTarget;
+    private Exception _targetReadingException;
     private IProjectListener _projectListener;
     private VirtualFileListener _virtualFileListener;
 
@@ -41,7 +44,7 @@ public class GoogleTestRunner implements ProjectComponent
 
     public void projectOpened()
     {
-        updateExeInfo();
+        updateAvailableTargetList();
 
         _virtualFileListener = new VirtualFileAdapter()
         {
@@ -68,14 +71,24 @@ public class GoogleTestRunner implements ProjectComponent
         _projectListener = projectListener;
     }
 
-    public ExecutableInfo get_exeInfo() throws Exception
+    public List<TargetInfo> get_availableTargets() throws Exception
     {
-        if (_exeInfo == null)
+        if (_targetReadingException != null)
         {
-            throw _exeInfoError;
+            throw _targetReadingException;
         }
 
-        return _exeInfo;
+        return _availableTargets;
+    }
+
+    public TargetInfo get_selectedTarget() throws Exception
+    {
+        if (_targetReadingException != null)
+        {
+            throw _targetReadingException;
+        }
+
+        return _selectedTarget;
     }
 
     public void openTestCase(String caseName) throws Exception
@@ -102,18 +115,30 @@ public class GoogleTestRunner implements ProjectComponent
         fileDescriptor.navigateInEditor(_project, true);
     }
 
-    private void updateExeInfo()
+    private void updateAvailableTargetList()
     {
-        _exeInfo = null;
-        _exeInfoError = null;
+        _availableTargets.clear();
+        _selectedTarget = null;
+        _targetReadingException = null;
 
         try
         {
-            _exeInfo = readExecutablePath(_project);
+            String workspacePath = _project.getWorkspaceFile().getPath();
+            List<TargetInfo> availableTargets = CLionProjectReader.readAllTargets(workspacePath);
+
+            for (int i = 0; i < availableTargets.size(); i++)
+            {
+                TargetInfo item = availableTargets.get(i);
+
+                item.executableInfo = readExecutablePath(_project, item);
+            }
+
+            _availableTargets.addAll(availableTargets);
+            _selectedTarget = availableTargets.size() > 0 ? availableTargets.get(0) : null;
         }
         catch (Exception ex)
         {
-            _exeInfoError = ex;
+            _targetReadingException = ex;
         }
 
         if (_projectListener != null)
@@ -122,12 +147,9 @@ public class GoogleTestRunner implements ProjectComponent
         }
     }
 
-    private static ExecutableInfo readExecutablePath(@NotNull Project project) throws Exception
+    private static ExecutableInfo readExecutablePath(@NotNull Project project, TargetInfo targetInfo) throws Exception
     {
-        String workspacePath = project.getWorkspaceFile().getPath();
-        TargetInfo targetInfo = CLionProjectReader.readSelectedTarget(workspacePath);
-
-        if (targetInfo.projectName.isEmpty())
+        if (targetInfo.runTargetProjectName.isEmpty())
         {
             throw new NoProjectException();
         }
@@ -144,9 +166,9 @@ public class GoogleTestRunner implements ProjectComponent
                 project.getLocationHash(),
                 project.getLocationHash(),
                 targetInfo.configName,
-                targetInfo.projectName + ".cbp");
+                targetInfo.runTargetProjectName + ".cbp");
 
-        String exePath = CLionProjectReader.readExecutablePath(cbpPath.toString(), targetInfo.targetName);
+        String exePath = CLionProjectReader.readExecutablePath(cbpPath.toString(), targetInfo.runTargetName);
 
         ExecutableInfo exeInfo = new ExecutableInfo();
         exeInfo.command = exePath;
@@ -161,7 +183,7 @@ public class GoogleTestRunner implements ProjectComponent
 
         if (event.getFile().getPath().equals(workspacePath))
         {
-            updateExeInfo();
+            updateAvailableTargetList();
         }
     }
 }
