@@ -313,11 +313,18 @@ public class RunnerToolWindow
         DefaultComboBoxModel<TargetInfo> uiAvailableTargets = new DefaultComboBoxModel<>(availableTargetsArray);
 
         _availableTargets.setModel(uiAvailableTargets);
+
+        //JOptionPane.showMessageDialog(null, "set available targets");
     }
 
     public void setCurrentTarget(TargetInfo currentTarget)
     {
         _availableTargets.setSelectedItem(currentTarget);
+    }
+
+    public TargetInfo getCurrentTarget()
+    {
+        return (TargetInfo)_availableTargets.getSelectedItem();
     }
 
     public void setError(String message)
@@ -378,7 +385,9 @@ public class RunnerToolWindow
 
     private void onStopButtonClicked(ActionEvent e)
     {
+        JOptionPane.showMessageDialog(null, "before");
         _process.destroy();
+        JOptionPane.showMessageDialog(null, "after");
     }
 
     private void onExpandAllButtonClicked(ActionEvent e)

@@ -64,22 +64,41 @@ public class RunnerToolWindowFactory implements ToolWindowFactory, DumbAware
 
     private void updateExecutablePath(Project project)
     {
-        _runnerToolWindow.setAvailableTargets(new ArrayList<TargetInfo>());
         _runnerToolWindow.setError("");
 
         try
         {
             List<TargetInfo> availableTargets = project.getComponent(GoogleTestRunner.class).get_availableTargets();
 
+            TargetInfo currentTarget = _runnerToolWindow.getCurrentTarget();
+            TargetInfo newTarget = null;
+
+            for (int i=0; i < availableTargets.size(); i++)
+            {
+                if (availableTargets.get(i).runTargetName.equals(currentTarget.runTargetName))
+                {
+                    newTarget = availableTargets.get(i);
+                    break;
+                }
+            }
+
             _runnerToolWindow.setAvailableTargets(availableTargets);
-            //_runnerToolWindow.setCurrentTarget(null);
+
+            if (newTarget == null && availableTargets.size() > 0)
+            {
+                newTarget = availableTargets.get(0);
+            }
+
+            _runnerToolWindow.setCurrentTarget(newTarget);
         }
         catch (NoProjectException ex)
         {
+            _runnerToolWindow.setAvailableTargets(new ArrayList<TargetInfo>());
             _runnerToolWindow.setError("Project does not exist. Probably run executable is not selected.");
         }
         catch (Exception ex)
         {
+            _runnerToolWindow.setAvailableTargets(new ArrayList<TargetInfo>());
             _runnerToolWindow.setError(Utils.toString(ex));
         }
     }
